@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +206,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+=======
+terraform/.terraform/*
+*.tfstate
+terraform/*.tfstate
+terraform/*.tfstate.backup
+# terraform lock file
+terraform/*.terraform.lock.hcl
+# terraform state files
+terraform/*.tfstate
+terraform/*.tfstate.backup
+
+# VM / Flask app files
+# تجاهل كل حاجة داخل فولدر flask-todo-app
+flask-todo/**
+!flask-todo/app.py
+!flask-todo/templates/
+!flask-todo/templates/**
+.dockerignore
+>>>>>>> 7ea07c3 (v1.1 from my app)

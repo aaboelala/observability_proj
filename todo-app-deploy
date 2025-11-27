@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: todo-app
+  name: todo-app
+  namespace: dev
+
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-app
+  template:
+    metadata:
+      labels:
+        app: todo-app
+    spec:
+      containers:
+      - image: flask-todo-app:v2.1
+        name: flask-todo-app
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-service
+  namespace: dev
+spec:
+  selector:
+    app: todo-app
+  ports:
+  - protocol: TCP
+
+    port: 80
+    targetPort: 8080
+  type: ClusterIP

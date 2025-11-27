@@ -1,0 +1,163 @@
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform: apply or destroy'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
+  workflow_call:
+    outputs:
+      result:
+        description: 'The result of the Terraform apply step'
+        value: ${{ jobs.terraform.outputs.result }}
+      cluster_name:
+        description: 'The name of the EKS cluster'
+        value: ${{ jobs.terraform.outputs.cluster_name }}
+      app_namespace:
+        description: 'The application namespace'
+        value: ${{ jobs.terraform.outputs.app_namespace }}
+      argocd_namespace:
+        description: 'The ArgoCD namespace'
+        value: ${{ jobs.terraform.outputs.argocd_namespace }}
+      monitoring_namespace:
+        description: 'The monitoring namespace'
+        value: ${{ jobs.terraform.outputs.monitoring_namespace }}
+      traces_namespace:
+        description: 'The traces namespace'
+        value: ${{ jobs.terraform.outputs.traces_namespace }}
+      logging_namespace:
+        description: 'The logging namespace'
+        value: ${{ jobs.terraform.outputs.logging_namespace }}
+      otlc_namespace:
+        description: 'The OpenTelemetry Collector namespace'
+        value: ${{ jobs.terraform.outputs.otlc_namespace }}
+
+    
+
+jobs:
+  terraform:
+    name: Terraform Apply
+    env:
+      TF_IN_AUTOMATION: true
+      TF_INPUT: false
+
+    runs-on: ubuntu-latest
+    outputs:
+      result: ${{ steps.terraform_apply.outcome }}
+      cluster_name: ${{ steps.terraform_output.outputs.cluster_name }}
+      app_namespace: ${{ steps.terraform_output.outputs.app_namespace }}
+      argocd_namespace: ${{ steps.terraform_output.outputs.argocd_namespace }}
+      monitoring_namespace: ${{ steps.terraform_output.outputs.monitoring_namespace }}
+      traces_namespace: ${{ steps.terraform_output.outputs.traces_namespace }}
+      logging_namespace: ${{ steps.terraform_output.outputs.logging_namespace }}
+      otlc_namespace: ${{ steps.terraform_output.outputs.namespace_otlc }}
+    
+    steps:
+      
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+
+      - name: login to aws using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Cache Terraform
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.terraform.d/plugin-cache
+            ./terraform/.terraform/plugins
+            ./terraform/.terraform/modules
+          key: terraform-${{ hashFiles('**/*.tf') }}
+          
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      - name: Terraform Validate
+        id: terraform_validate
+        run: terraform validate
+        working-directory: ./terraform
+
+
+      - name: Terraform Apply
+        id: terraform_apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform
+
+      - name: Export terraform outputs to env
+        run: |
+         echo "CLUSTER_NAME=$(terraform output -raw cluster_name)" >> 
+          echo "APP_NAMESPACE=$(terraform output -raw app_namespace)" >> $GITHUB_ENV
+          echo "ARGOCD_NAMESPACE=$(terraform output -raw argo_cd_namespace)" >> $GITHUB_ENV
+          echo "MONITORING_NAMESPACE=$(terraform output -raw monitoring_namespace)" >> $GITHUB_ENV
+          echo "TRACES_NAMESPACE=$(terraform output -raw traces_namespace)" >> $GITHUB_ENV
+          echo "LOGGING_NAMESPACE=$(terraform output -raw logging_namespace)" >> $GITHUB_ENV
+          echo "NAMESPACE_OTLC=$(terraform output -raw namespace_otlc)" >> $GITHUB_ENV
+        working-directory: ./terraform
+
+      - name: Export Terraform outputs to job outputs
+        id: terraform_output
+        run: |
+          echo "cluster_name=$(terraform output -raw cluster_name)" >> $GITHUB_OUTPUT
+          echo "app_namespace=$(terraform output -raw app_namespace)" >> $GITHUB_OUTPUT
+          echo "argo_cd_namespace=$(terraform output -raw argo_cd_namespace)" >> $GITHUB_OUTPUT
+          echo "monitoring_namespace=$(terraform output -raw monitoring_namespace)" >> $GITHUB_OUTPUT
+          echo "traces_namespace=$(terraform output -raw traces_namespace)" >> $GITHUB_OUTPUT
+          echo "logging_namespace=$(terraform output -raw logging_namespace)" >> $GITHUB_OUTPUT
+          echo "namespace_otlc=$(terraform output -raw namespace_otlc)" >> $GITHUB_OUTPUT      
+        working-directory: ./terraform
+
+      - name: Set GitHub repository variables
+        if: env.GITHUB_TOKEN != ''
+        run: |
+          gh variable set CLUSTER_NAME --body "$CLUSTER_NAME" --repo $GITHUB_REPOSITORY
+          gh variable set APP_NAMESPACE --body "$APP_NAMESPACE" --repo $GITHUB_REPOSITORY
+          gh variable set ARGOCD_NAMESPACE --body "$ARGOCD_NAMESPACE" --repo $GITHUB_REPOSITORY
+          gh variable set MONITORING_NAMESPACE --body "$MONITORING_NAMESPACE" --repo $GITHUB_REPOSITORY
+          gh variable set TRACES_NAMESPACE --body "$TRACES_NAMESPACE" --repo $GITHUB_REPOSITORY
+          gh variable set LOGGING_NAMESPACE --body "$LOGGING_NAMESPACE" --repo $GITHUB_REPOSITORY
+          gh variable set NAMESPACE_OTLC --body "$NAMESPACE_OTLC" --repo $GITHUB_REPOSITORY
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}    
+
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'destroy' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.0
+
+      - name: login to aws using OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./Terraform
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        working-directory: ./Terraform
+
+    

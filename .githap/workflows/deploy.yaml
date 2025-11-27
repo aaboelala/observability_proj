@@ -1,0 +1,161 @@
+name: Build and Deploy with ArgoCD
+
+on:
+  workflow_dispatch:
+    inputs:
+      argocd_namespace:
+        description: 'Namespace for ArgoCD installation'
+        required: true
+        default: 'argocd'
+        type: string
+      app_namespace:
+        description: 'Namespace for the application'
+        required: true
+        default: 'default'
+        type: string
+  workflow_call:
+    inputs:
+      argocd_namespace:
+        description: 'Namespace for ArgoCD installation'
+        required: true
+        type: string
+      app_namespace:
+        description: 'Namespace for the application'
+        required: true
+        type: string
+      cluster_name:
+        description: 'The name of the EKS cluster'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/my-app
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.push.outputs.digest }}
+      image-url: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          # note: For GHCR, GITHUB_TOKEN is sufficient for authentication
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-argocd:
+    name: Deploy ArgoCD and Application
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up AWS CLI by OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure Kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region us-east-1
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Install ArgoCD using Helm
+        run: |
+          helm repo add argo https://argoproj.github.io/argo-helm
+          helm repo update
+          
+          # Create namespace if it doesn't exist
+          kubectl create namespace ${{ inputs.argocd_namespace }} --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Install ArgoCD
+          helm upgrade --install argocd argo/argo-cd \
+            --namespace ${{ inputs.argocd_namespace }} \
+            --set server.service.type=LoadBalancer \
+            --set controller.args.appResyncPeriod=180 \
+            --wait --timeout 300s
+
+      - name: Wait for ArgoCD to be ready
+        run: |
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=argocd-server \
+            -n ${{ inputs.argocd_namespace }} \
+            --timeout=600s
+
+      - name: Get ArgoCD admin password
+        run: |
+          echo "ArgoCD Admin Password:"
+          kubectl -n ${{ inputs.argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+          echo ""
+
+      - name: Update ArgoCD Application with latest image
+        run: |
+          # Update the image tag in the application manifest
+          sed -i "s|ghcr.io/.*|${{ needs.build-and-push.outputs.image-url }}:latest|g" argocd/applications/my-app.yaml
+          
+          # Apply the ArgoCD application
+          kubectl apply -f argocd/applications/my-app.yaml -n ${{ inputs.argocd_namespace }}
+
+      - name: Wait for application sync
+        run: |
+          # Wait for application to be synced
+          timeout 300 bash -c 'while [[ $(kubectl get app my-app -n ${{ inputs.argocd_namespace }} -o jsonpath="{.status.sync.status}") != "Synced" ]]; do echo "Waiting for application to sync..."; sleep 10; done'
+          echo "Application synced successfully!"
+
+      # i waanna know the dns name of application named my-app
+      - name: Get Application LoadBalancer DNS
+        run: |
+          APP_DNS=$(kubectl get svc my-app -n ${{ inputs.app_namespace }} -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+          echo "Application is accessible at: http://$APP_DNS"
+          echo "APP_DNS=$APP_DNS" >> $GITHUB_ENV
+    

@@ -1,0 +1,22 @@
+on:
+  workflow_dispatch:
+jobs:
+  terraform:
+    uses: ./.githap/workflows/terraform.yaml
+  deploy:
+    needs: terraform
+    uses: ./.githap/workflows/deploy.yaml
+    with:
+      argocd_namespace: ${{ needs.terraform.outputs.argocd_namespace }}
+      app_namespace: ${{ needs.terraform.outputs.app_namespace }}
+      cluster_name: ${{ needs.terraform.outputs.cluster_name }}
+  observability:
+    needs: terraform
+    uses: ./.githap/workflows/observability.yaml
+    with:
+      cluster_name: ${{ needs.terraform.outputs.cluster_name }}
+      monitoring_namespace: ${{ needs.terraform.outputs.monitoring_namespace }}
+      traces_namespace: ${{ needs.terraform.outputs.traces_namespace }}
+      logging_namespace: ${{ needs.terraform.outputs.logging_namespace }}
+      otlc_namespace: ${{ needs.terraform.outputs.otlc_namespace }}
+  

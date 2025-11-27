@@ -1,0 +1,125 @@
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform: apply or destroy'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - destroy
+  workflow_call:
+    inputs:
+      cluster_name:
+        description: 'The name of the EKS cluster'
+        required: true
+        type: string
+      monitoring_namespace:
+        description: 'The monitoring namespace'
+        required: true
+        type: string
+      traces_namespace:
+        description: 'The traces namespace'
+        required: true
+        type: string
+      logging_namespace:
+        description: 'The logging namespace'
+        required: true
+        type: string  
+      otlc_namespace:
+        description: 'The OpenTelemetry Collector namespace'
+        required: true
+        type: string
+
+jobs:
+  observability-setup:
+    name: Observability Setup
+    runs-on: ubuntu-latest
+    env:
+      ELASTICSEARCH_USERNAME: ""
+      ELASTICSEARCH_PASSWORD: ""
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up AWS CLI by OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure Kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region us-east-1
+
+      - name: set up helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest' 
+
+      - name: Install openTelemetry using Helm
+        run: |
+          helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo update
+          helm install otel-collector open-telemetry/opentelemetry-collector --namespace ${{ inputs.otlc_namespace }} --create-namespace 
+
+      - name: Install Prometheus using Helm
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          helm install prometheus prometheus-community/prometheus --namespace ${{ inputs.monitoring_namespace }} --create-namespace
+          
+      - name: Install loki using helm 
+        run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+          helm install loki grafana/loki --namespace ${{ inputs.logging_namespace }} --create-namespace
+
+      - name: install elastic stack using helm
+        run: |
+          helm repo add elastic https://helm.elastic.co
+          helm repo update
+          helm install elasticsearch \
+           --set replicas=1 \
+           --set volumeClaimTemplate.storageClassName=gp2 \
+           --set persistence.labels.enabled=true elastic/elasticsearch -n ${{ inputs.traces_namespace }} --create-namespace
+
+           kubectl rollout status statefulset/elasticsearch-master -n ${{ inputs.traces_namespace }} --timeout=600s 
+
+
+           kubectl get secret elasticsearch-master-certs -n ${{ inputs.traces_namespace }} -o jsonpath="{.data['ca\.crt']}" | base64 --decode > ca-cert.pem
+           kubectl create configmap elastic-ca-cert --from-file=ca-cert.pem -n ${{ inputs.traces_namespace }}
+ 
+           echo "ELASTICSEARCH_USERNAME=$(kubectl get secrets --namespace=${{ inputs.traces_namespace }} elasticsearch-master-credentials -ojsonpath='{.data.username}' | base64 -d)" >> $GITHUB_ENV
+           echo "ELASTICSEARCH_PASSWORD=$(kubectl get secrets --namespace=${{ inputs.traces_namespace }} elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d)" >> $GITHUB_ENV
+
+
+
+
+      - name: install jaeger using helm
+        run: |
+          helm repo add jaeger https://jaegertracing.github.io/helm-charts
+          helm repo update
+          helm install jaeger jaeger/jaeger --namespace ${{ inputs.traces_namespace }} --create-namespace -f ./helm/jaeger-values.yaml \
+            --set storage.elasticsearch.elasticsearch.host=elasticsearch \
+            --set storage.elasticsearch.elasticsearch.user=${{ env.ELASTICSEARCH_USERNAME }} \
+            --set storage.elasticsearch.elasticsearch.password=${{ env.ELASTICSEARCH_PASSWORD }} \
+            --set storage.elasticsearch.elasticsearch.tls.ca="/tls/ca-cert.pem" \
+
+            --set query.extraConfigmapMounts[0].name=elastic-ca-cert \
+            --set query.extraConfigmapMounts[0].configMap=elastic-ca-cert \
+            --set query.extraConfigmapMounts[0].mountPath=/tls \
+            --set query.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" \  
+            
+            --set collector.extraConfigmapMounts[0].name=elastic-ca-cert \
+            --set collector.extraConfigmapMounts[0].configMap=elastic-ca-cert \
+            --set collector.extraConfigmapMounts[0].mountPath=/tls \
+            --set collector.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" 
+
+

@@ -1,0 +1,57 @@
+config: |
+  receivers:
+    otlp:
+      protocols:
+        grpc: {}
+        http: {}
+  processors:
+    batch:
+      timeout: 10s
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 512
+      spike_limit_mib: 128
+
+  exporters:
+    loki:
+      # push logs to Loki
+      endpoint: "http://loki:3100/loki/api/v1/push"
+      tenant_id: ""
+      labels:
+        job: "otel-collector"
+      # optional: adjust timeout, tenant header, etc. if needed
+
+    jaeger:
+      # send traces to Jaeger collector (HTTP thrift endpoint)
+      endpoint: "http://jaeger-collector:14268/api/traces"
+      tls:
+        insecure: true
+
+    prometheus:
+      # expose metrics so Prometheus can pull/scrape them
+      endpoint: "0.0.0.0:8888"
+      namespace: "otelcol"
+      const_labels:
+        service: "otel-collector"
+
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [jaeger]
+      logs:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [loki]
+      metrics:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [prometheus]
+
+    telemetry:
+      # collector internal telemetry (also exposed for scraping)
+      metrics:
+        address: "0.0.0.0:8888"
+      logs:
+        level: "info"
