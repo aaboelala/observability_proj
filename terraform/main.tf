@@ -19,7 +19,6 @@ module "eks" {
   cluster_version = var.cluster_version
   subnet_ids      = module.vpc.private_subnet_ids
   node_groups     = var.node_groups
-  depends_on      = [ module.vpc ]
 }
 
 resource "aws_eks_addon" "metrics_server" {
