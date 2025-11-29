@@ -1,8 +1,5 @@
 #account id output
-output "account_id" {
-  description = "The AWS account ID"
-  value       = data.aws_caller_identity.current.account_id
-}
+
 
 output "cluster_name" {
   description = "The name of the EKS cluster"
