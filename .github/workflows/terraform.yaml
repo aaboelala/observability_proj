@@ -47,6 +47,8 @@ jobs:
     env:
       TF_IN_AUTOMATION: true
       TF_INPUT: false
+    
+    if: ${{ github.event_name != 'workflow_dispatch' && inputs.action != 'destroy' }}
 
     runs-on: ubuntu-latest
     outputs:
@@ -58,7 +60,7 @@ jobs:
       traces_namespace: ${{ steps.terraform_output.outputs.traces_namespace }}
       logging_namespace: ${{ steps.terraform_output.outputs.logging_namespace }}
       otlc_namespace: ${{ steps.terraform_output.outputs.namespace_otlc }}
-    
+
     steps:
       
 
