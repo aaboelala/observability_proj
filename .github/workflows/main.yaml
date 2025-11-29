@@ -1,8 +1,15 @@
 on:
   workflow_dispatch:
+
 jobs:
   terraform:
     uses: ./.github/workflows/terraform.yaml
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    secrets: inherit
+
   deploy:
     needs: terraform
     uses: ./.github/workflows/deploy.yaml
@@ -10,6 +17,12 @@ jobs:
       argocd_namespace: ${{ needs.terraform.outputs.argocd_namespace }}
       app_namespace: ${{ needs.terraform.outputs.app_namespace }}
       cluster_name: ${{ needs.terraform.outputs.cluster_name }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit
+
   observability:
     needs: terraform
     uses: ./.github/workflows/observability.yaml
@@ -19,4 +32,8 @@ jobs:
       traces_namespace: ${{ needs.terraform.outputs.traces_namespace }}
       logging_namespace: ${{ needs.terraform.outputs.logging_namespace }}
       otlc_namespace: ${{ needs.terraform.outputs.otlc_namespace }}
-  
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit

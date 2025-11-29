@@ -36,7 +36,10 @@ on:
         description: 'The OpenTelemetry Collector namespace'
         value: ${{ jobs.terraform.outputs.otlc_namespace }}
 
-    
+permissions:
+  id-token: write
+  contents: read
+  actions: read   
 
 jobs:
   terraform:
