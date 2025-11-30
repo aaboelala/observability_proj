@@ -121,7 +121,7 @@ jobs:
             --namespace ${{ inputs.argocd_namespace }} \
             --set server.service.type=LoadBalancer \
             --set controller.args.appResyncPeriod=180 \
-            --wait --create-namespace --timeout 300s 
+            --create-namespace --timeout 300s 
 
       - name: Wait for ArgoCD to be ready
         run: |
