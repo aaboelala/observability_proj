@@ -3,14 +3,16 @@ name: Build and Deploy with Terraform, ArgoCD, and Observability
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  actions: write
+  id-token: write
+  packages: write
+  # ممكن تزود others لو محتاج
+
 jobs:
   terraform:
     uses: ./.github/workflows/terraform.yaml
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
-      actions: read  
     secrets: inherit
 
   deploy:
@@ -20,11 +22,6 @@ jobs:
       argocd_namespace: ${{ needs.terraform.outputs.argocd_namespace }}
       app_namespace: ${{ needs.terraform.outputs.app_namespace }}
       cluster_name: ${{ needs.terraform.outputs.cluster_name }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      actions: read  
     secrets: inherit
 
   observability:
@@ -36,9 +33,4 @@ jobs:
       traces_namespace: ${{ needs.terraform.outputs.traces_namespace }}
       logging_namespace: ${{ needs.terraform.outputs.logging_namespace }}
       otlc_namespace: ${{ needs.terraform.outputs.otlc_namespace }}
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      actions: read  
     secrets: inherit
