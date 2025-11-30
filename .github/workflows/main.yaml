@@ -21,7 +21,6 @@ permissions:
 
 jobs:
   terraform:
-    if: ${{ github.event.inputs.action == 'no' }}
     uses: ./.github/workflows/terraform.yaml
     secrets: inherit
 
