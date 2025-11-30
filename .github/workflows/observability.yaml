@@ -67,7 +67,7 @@ jobs:
         run: |
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo update
-          helm install otel-collector open-telemetry/opentelemetry-collector --namespace ${{ inputs.otlc_namespace }} --create-namespace 
+          helm install otel-collector open-telemetry/opentelemetry-collector --namespace ${{ inputs.otlc_namespace }} -f ./helm/otel-collector-values.yaml --create-namespace
 
       - name: Install Prometheus using Helm
         run: |

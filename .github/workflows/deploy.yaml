@@ -1,4 +1,5 @@
 name: Build and Deploy with ArgoCD
+
 on:
   workflow_dispatch:
     inputs:
@@ -114,16 +115,13 @@ jobs:
         run: |
           helm repo add argo https://argoproj.github.io/argo-helm
           helm repo update
-          
-          # Create namespace if it doesn't exist
-          kubectl create namespace ${{ inputs.argocd_namespace }} --dry-run=client -o yaml | kubectl apply -f -
-          
+
           # Install ArgoCD
           helm upgrade --install argocd argo/argo-cd \
             --namespace ${{ inputs.argocd_namespace }} \
             --set server.service.type=LoadBalancer \
             --set controller.args.appResyncPeriod=180 \
-            --wait --timeout 300s
+            --wait --create-namespace --timeout 300s 
 
       - name: Wait for ArgoCD to be ready
         run: |
