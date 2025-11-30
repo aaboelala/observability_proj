@@ -37,9 +37,10 @@ on:
         value: ${{ jobs.terraform.outputs.otlc_namespace }}
 
 permissions:
+  contents: read
+  packages: write
   id-token: write
-  contents: write
-  actions: write
+  actions: read
 
 jobs:
   terraform:
