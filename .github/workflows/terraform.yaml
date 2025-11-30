@@ -103,7 +103,7 @@ jobs:
 
       - name: Export terraform outputs to env
         run: |
-         echo "CLUSTER_NAME=$(terraform output -raw cluster_name)" >> 
+          echo "CLUSTER_NAME=$(terraform output -raw cluster_name)" >> $GITHUB_ENV
           echo "APP_NAMESPACE=$(terraform output -raw app_namespace)" >> $GITHUB_ENV
           echo "ARGOCD_NAMESPACE=$(terraform output -raw argo_cd_namespace)" >> $GITHUB_ENV
           echo "MONITORING_NAMESPACE=$(terraform output -raw monitoring_namespace)" >> $GITHUB_ENV
