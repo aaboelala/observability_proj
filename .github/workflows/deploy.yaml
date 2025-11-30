@@ -114,10 +114,10 @@ jobs:
       - name: Install ArgoCD using Helm
         run: |
           helm repo add argo https://argoproj.github.io/argo-helm
-          helm repo update
+          helm repo update 
 
           # Install ArgoCD
-          helm upgrade --install argocd argo/argo-cd \
+          helm install argocd argo/argo-cd \
             --namespace ${{ inputs.argocd_namespace }} \
             --set server.service.type=LoadBalancer \
             --set controller.args.appResyncPeriod=180 \
