@@ -2,6 +2,15 @@ name: Build and Deploy with Terraform, ArgoCD, and Observability
 
 on:
   workflow_dispatch:
+      inputs:
+        action:
+          description: 'Action to perform: skip terraform or no'
+          required: true
+          default: 'no'
+          type: choice
+          options:
+            - no
+            - yes
 
 permissions:
   contents: write
@@ -12,6 +21,7 @@ permissions:
 
 jobs:
   terraform:
+    if: ${{ github.event.inputs.action == 'no' }}
     uses: ./.github/workflows/terraform.yaml
     secrets: inherit
 
