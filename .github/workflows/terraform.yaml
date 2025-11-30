@@ -127,7 +127,6 @@ jobs:
         working-directory: ./terraform
 
       - name: Set GitHub repository variables
-        if: env.GITHUB_TOKEN != ''
         run: |
           gh variable set CLUSTER_NAME --body "$CLUSTER_NAME" --repo $GITHUB_REPOSITORY
           gh variable set APP_NAMESPACE --body "$APP_NAMESPACE" --repo $GITHUB_REPOSITORY
