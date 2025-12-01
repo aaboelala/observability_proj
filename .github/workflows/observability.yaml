@@ -89,6 +89,8 @@ jobs:
           
       - name: Install loki using helm 
         run: |
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
           if helm status loki -n ${{ inputs.logging_namespace }} > /dev/null 2>&1; then
              echo "Release loki already exists, skipping install."
           else
