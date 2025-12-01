@@ -110,7 +110,6 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: 'latest'
-
       - name: Add ArgoCD Helm Repo
         run: |
           helm repo add argo https://argoproj.github.io/argo-helm

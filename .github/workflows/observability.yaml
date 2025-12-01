@@ -83,7 +83,11 @@ jobs:
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
-          helm install loki grafana/loki --namespace ${{ inputs.logging_namespace }} --create-namespace
+          helm install loki grafana/loki \
+           --namespace ${{ inputs.logging_namespace }} \
+           --create-namespace \
+           --set loki.mode=monolithic
+
 
       - name: install elastic stack using helm
         run: |
