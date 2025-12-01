@@ -28,6 +28,12 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  actions: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/my-app
@@ -116,7 +122,8 @@ jobs:
           helm repo update
 
       - name: Install/Upgrade ArgoCD
-        run: |
+        run: | 
+        
           helm upgrade --install argocd argo/argo-cd \
             --namespace ${{ inputs.argocd_namespace }} \
             --create-namespace \

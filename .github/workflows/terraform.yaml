@@ -56,7 +56,7 @@ jobs:
       result: ${{ steps.terraform_apply.outcome }}
       cluster_name: ${{ steps.terraform_output.outputs.cluster_name }}
       app_namespace: ${{ steps.terraform_output.outputs.app_namespace }}
-      argocd_namespace: ${{ steps.terraform_output.outputs.argocd_namespace }}
+      argocd_namespace: ${{ steps.terraform_output.outputs.argo_cd_namespace }}
       monitoring_namespace: ${{ steps.terraform_output.outputs.monitoring_namespace }}
       traces_namespace: ${{ steps.terraform_output.outputs.traces_namespace }}
       logging_namespace: ${{ steps.terraform_output.outputs.logging_namespace }}

@@ -67,36 +67,52 @@ jobs:
         run: |
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo update
-          helm install otel-collector open-telemetry/opentelemetry-collector \
-            --namespace ${{ inputs.otlc_namespace }} \
-            -f ./helm/otel-collector.yaml \
-            --create-namespace
+          if helm status otel-collector -n ${{ inputs.otlc_namespace }} > /dev/null 2>&1; then
+             echo "Release otel-collector already exists, skipping install."
+          else
+             helm install otel-collector open-telemetry/opentelemetry-collector \
+               --namespace ${{ inputs.otlc_namespace }} \
+               -f ./helm/otel-collector.yaml \
+               --create-namespace
+          fi
       
       
       - name: Install Prometheus using Helm
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-          helm install prometheus prometheus-community/prometheus --namespace ${{ inputs.monitoring_namespace }} --create-namespace
-          
+          if helm status prometheus -n ${{ inputs.monitoring_namespace }} > /dev/null 2>&1; then
+             echo "Release prometheus already exists, skipping install."
+          else
+             helm install prometheus prometheus-community/prometheus --namespace ${{ inputs.monitoring_namespace }} --create-namespace
+          fi
       - name: Install loki using helm 
         run: |
-          helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo update
-          helm install loki grafana/loki \
-           --namespace ${{ inputs.logging_namespace }} \
-           --create-namespace \
-           --set loki.mode=monolithic
+          if helm status loki -n ${{ inputs.logging_namespace }} > /dev/null 2>&1; then
+             echo "Release loki already exists, skipping install."
+          else
+             helm repo add grafana https://grafana.github.io/helm-charts
+             helm repo update
+             helm install loki grafana/loki \
+              --namespace ${{ inputs.logging_namespace }} \
+              --create-namespace \
+              --set loki.mode=monolithic
+          fi
 
 
       - name: install elastic stack using helm
         run: |
-          helm repo add elastic https://helm.elastic.co
-          helm repo update
-          helm install elasticsearch \
-           --set replicas=1 \
-           --set volumeClaimTemplate.storageClassName=gp2 \
-           --set persistence.labels.enabled=true elastic/elasticsearch -n ${{ inputs.traces_namespace }} --create-namespace
+          if helm status elasticsearch -n ${{ inputs.traces_namespace }} > /dev/null 2>&1; then
+             echo "Release elasticsearch already exists, skipping install."
+          else
+
+             helm repo add elastic https://helm.elastic.co
+             helm repo update
+             helm install elasticsearch \
+              --set replicas=1 \
+              --set volumeClaimTemplate.storageClassName=gp2 \
+              --set persistence.labels.enabled=true elastic/elasticsearch -n ${{ inputs.traces_namespace }} --create-namespace
+          fi
 
            kubectl rollout status statefulset/elasticsearch-master -n ${{ inputs.traces_namespace }} --timeout=600s 
 
@@ -112,22 +128,27 @@ jobs:
 
       - name: install jaeger using helm
         run: |
-          helm repo add jaeger https://jaegertracing.github.io/helm-charts
-          helm repo update
-          helm install jaeger jaeger/jaeger --namespace ${{ inputs.traces_namespace }} --create-namespace -f ./helm/jaeger-values.yaml \
-            --set storage.elasticsearch.elasticsearch.host=elasticsearch \
-            --set storage.elasticsearch.elasticsearch.user=${{ env.ELASTICSEARCH_USERNAME }} \
-            --set storage.elasticsearch.elasticsearch.password=${{ env.ELASTICSEARCH_PASSWORD }} \
-            --set storage.elasticsearch.elasticsearch.tls.ca="/tls/ca-cert.pem" \
+          if helm status jaeger -n ${{ inputs.traces_namespace }} > /dev/null 2>&1; then
+             echo "Release jaeger already exists, skipping install."
+          else
+              helm repo add jaeger https://jaegertracing.github.io/helm-charts
+              helm repo update
+              helm install jaeger jaeger/jaeger --namespace ${{ inputs.traces_namespace }} --create-namespace -f ./helm/jaeger-values.yaml \
+                --set storage.elasticsearch.elasticsearch.host=elasticsearch \
+                --set storage.elasticsearch.elasticsearch.user=${{ env.ELASTICSEARCH_USERNAME }} \
+                --set storage.elasticsearch.elasticsearch.password=${{ env.ELASTICSEARCH_PASSWORD }} \
+                --set storage.elasticsearch.elasticsearch.tls.ca="/tls/ca-cert.pem" \
 
-            --set query.extraConfigmapMounts[0].name=elastic-ca-cert \
-            --set query.extraConfigmapMounts[0].configMap=elastic-ca-cert \
-            --set query.extraConfigmapMounts[0].mountPath=/tls \
-            --set query.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" \  
-            
-            --set collector.extraConfigmapMounts[0].name=elastic-ca-cert \
-            --set collector.extraConfigmapMounts[0].configMap=elastic-ca-cert \
-            --set collector.extraConfigmapMounts[0].mountPath=/tls \
-            --set collector.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" 
+                --set query.extraConfigmapMounts[0].name=elastic-ca-cert \
+                --set query.extraConfigmapMounts[0].configMap=elastic-ca-cert \
+                --set query.extraConfigmapMounts[0].mountPath=/tls \
+                --set query.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" \  
+
+                --set collector.extraConfigmapMounts[0].name=elastic-ca-cert \
+                --set collector.extraConfigmapMounts[0].configMap=elastic-ca-cert \
+                --set collector.extraConfigmapMounts[0].mountPath=/tls \
+                --set collector.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" 
+
+          fi
 
 
