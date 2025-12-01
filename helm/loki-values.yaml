@@ -1,17 +1,33 @@
-image:
-  repository: grafana/loki
-  tag: "2.9.1"
-
 loki:
-  commonConfig:
-    replication_factor: 1
   auth_enabled: false
-  storage:
-    type: filesystem
-
+  
+deploymentMode: scalable
 singleBinary:
-  enabled: true
-  replicas: 1
+  replicas: 0
+simpleScalable:
+  replicas: 2
 
-persistence:
+test:
   enabled: false
+  
+config:
+  server:
+    http_listen_port: 3100
+  ingester:
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+  storage_config:
+    filesystem:
+      directory: /tmp/loki/chunks
+  schema_config:
+    configs:
+    - from: "2020-10-24"
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
