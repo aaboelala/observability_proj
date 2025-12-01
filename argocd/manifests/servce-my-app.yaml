@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: ghcr.io/your-username/your-repo/my-app:latest
+        image: ghcr.io/aaboelala/observability_proj:0f4e95c58ac0492314a61f801c39ded535b3c529
         ports:
         - containerPort: 80
 ---
