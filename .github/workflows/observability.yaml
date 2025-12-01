@@ -86,17 +86,22 @@ jobs:
           else
              helm install prometheus prometheus-community/prometheus --namespace ${{ inputs.monitoring_namespace }} --create-namespace
           fi
+          
       - name: Install loki using helm 
         run: |
           if helm status loki -n ${{ inputs.logging_namespace }} > /dev/null 2>&1; then
              echo "Release loki already exists, skipping install."
           else
-             helm repo add grafana https://grafana.github.io/helm-charts
-             helm repo update
-             helm install loki grafana/loki \
-              --namespace ${{ inputs.logging_namespace }} \
-              --create-namespace \
-              --set loki.mode=monolithic
+             helm upgrade --install loki grafana/loki \
+                --version 5.36.0 \
+                --namespace ${{ inputs.logging_namespace }} \
+                --set "loki.commonConfig.replication_factor=1" \
+                --set "loki.storage.type=filesystem" \
+                --set "loki.auth_enabled=false" \
+                --set "singleBinary.replicas=1" \
+                --create-namespace \
+                --timeout 600s \
+                --wait
           fi
 
 
