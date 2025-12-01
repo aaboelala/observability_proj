@@ -29,7 +29,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   id-token: write
   actions: write
@@ -42,9 +42,7 @@ jobs:
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest   
-    permissions:
-      contents: read
-      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -129,12 +127,22 @@ jobs:
         run: |
           ARGOCD_DNS=$(kubectl get svc argocd-server -n ${{ inputs.argocd_namespace }} -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
           echo "ArgoCD Server is accessible at: http://$ARGOCD_DNS"
-          echo "ARGOCD_DNS=$ARGOCD_DNS" >> $GITHUB_ENV
+          echo "ARGOCD_DNS=$ARGOCD_DNS" >> $GITHUB_ENV 
+     
+      - name: Update manifest image tag
+        run: |
+          sed -i "s|image: ghcr.io/.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" argocd/manifests/service-my-app.yaml
 
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+
+          git add argocd/manifests/service-my-app.yaml
+          git commit -m "Update image to ${{ github.sha }}"
+          git push 
+
+           
       - name: Update ArgoCD Application with latest image
         run: |
-          # Update the image tag in the application manifest
-          sed -i "s|image: ghcr.io/.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" argocd/application/my-app.yaml
           
           # Apply the ArgoCD application
           kubectl apply -f argocd/application/my-app.yaml -n ${{ inputs.argocd_namespace }}
