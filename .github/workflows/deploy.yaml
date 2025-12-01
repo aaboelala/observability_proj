@@ -130,7 +130,7 @@ jobs:
           ARGOCD_DNS=$(kubectl get svc argocd-server -n ${{ inputs.argocd_namespace }} -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
           echo "ArgoCD Server is accessible at: http://$ARGOCD_DNS"
           echo "ARGOCD_DNS=$ARGOCD_DNS" >> $GITHUB_ENV
-          
+
       - name: Update ArgoCD Application with latest image
         run: |
           # Update the image tag in the application manifest
@@ -148,7 +148,7 @@ jobs:
       # i waanna know the dns name of application named my-app
       - name: Get Application LoadBalancer DNS
         run: |
-          APP_DNS=$(kubectl get svc my-app -n ${{ inputs.app_namespace }} -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+          APP_DNS=$(kubectl get svc my-app -n my-app -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
           echo "Application is accessible at: http://$APP_DNS"
           echo "APP_DNS=$APP_DNS" >> $GITHUB_ENV
     
