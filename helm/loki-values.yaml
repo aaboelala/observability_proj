@@ -10,24 +10,29 @@ simpleScalable:
 test:
   enabled: false
   
-config:
-  server:
-    http_listen_port: 3100
-  ingester:
-    lifecycler:
-      ring:
-        kvstore:
-          store: inmemory
-        replication_factor: 1
-  storage_config:
-    filesystem:
-      directory: /tmp/loki/chunks
-  schema_config:
-    configs:
-    - from: "2020-10-24"
-      store: boltdb-shipper
-      object_store: filesystem
-      schema: v11
-      index:
-        prefix: index_
-        period: 24h
+
+  config: |
+    server:
+      http_listen_port: 3100
+
+    limits_config:
+      allow_structured_metadata: true
+
+    schema_config:
+      configs:
+        - from: 2020-10-24
+          store: boltdb-shipper
+          object_store: filesystem
+          schema: v11
+          index:
+            prefix: index_
+            period: 24h
+
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /var/loki/index
+        cache_location: /var/loki/cache
+        shared_store: filesystem
+
+      filesystem:
+        directory: /var/loki/chunks

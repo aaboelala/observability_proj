@@ -125,7 +125,12 @@ jobs:
           echo "ArgoCD Admin Password:"
           kubectl -n ${{ inputs.argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
           echo ""
-
+      - name: get dns name of argocd server
+        run: |
+          ARGOCD_DNS=$(kubectl get svc argocd-server -n ${{ inputs.argocd_namespace }} -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+          echo "ArgoCD Server is accessible at: http://$ARGOCD_DNS"
+          echo "ARGOCD_DNS=$ARGOCD_DNS" >> $GITHUB_ENV
+          
       - name: Update ArgoCD Application with latest image
         run: |
           # Update the image tag in the application manifest
