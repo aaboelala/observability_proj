@@ -152,7 +152,7 @@ jobs:
           sed -i "s|ghcr.io/.*|${{ needs.build-and-push.outputs.image-url }}:latest|g" argocd/application/my-app.yaml
           
           # Apply the ArgoCD application
-          kubectl apply -f argocd/applications/my-app.yaml -n ${{ inputs.argocd_namespace }}
+          kubectl apply -f argocd/application/my-app.yaml -n ${{ inputs.argocd_namespace }}
 
       - name: Wait for application sync
         run: |

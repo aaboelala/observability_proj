@@ -93,7 +93,6 @@ jobs:
              echo "Release loki already exists, skipping install."
           else
              helm upgrade --install loki grafana/loki \
-                --version 5.36.0 \
                 --namespace ${{ inputs.logging_namespace }} \
                 --set "loki.commonConfig.replication_factor=1" \
                 --set "loki.storage.type=filesystem" \
