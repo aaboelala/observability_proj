@@ -123,12 +123,15 @@ jobs:
 
       - name: Install/Upgrade ArgoCD
         run: | 
-        
-          helm upgrade --install argocd argo/argo-cd \
-            --namespace ${{ inputs.argocd_namespace }} \
-            --create-namespace \
-            --set server.service.type=LoadBalancer \
-            --wait
+          if helm status argocd -n ${{ inputs.argocd_namespace }} > /dev/null 2>&1; then
+             echo "Release argocd already exists, skipping install."
+          else  
+              helm upgrade --install argocd argo/argo-cd \
+                --namespace ${{ inputs.argocd_namespace }} \
+                --create-namespace \
+                --set server.service.type=LoadBalancer \
+                --wait
+          fi
 
       - name: Wait for ArgoCD to be ready
         run: |
