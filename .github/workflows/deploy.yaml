@@ -131,12 +131,12 @@ jobs:
      
       - name: Update manifest image tag
         run: |
-          sed -i "s|image: ghcr.io/.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" argocd/manifests/service-my-app.yaml
+          sed -i "s|image: ghcr.io/.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" argocd/manifests/servce-my-app.yaml
 
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
 
-          git add argocd/manifests/service-my-app.yaml
+          git add argocd/manifests/servce-my-app.yaml
           git commit -m "Update image to ${{ github.sha }}"
           git push 
 
