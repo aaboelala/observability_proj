@@ -110,18 +110,19 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: 'latest'
-      - name: Install ArgoCD using Helm
+
+      - name: Add ArgoCD Helm Repo
         run: |
           helm repo add argo https://argoproj.github.io/argo-helm
-          helm repo update 
-      
-          # Install specific version
-          helm install argocd argo/argo-cd \
-            --version 5.46.8 \
+          helm repo update
+
+      - name: Install/Upgrade ArgoCD
+        run: |
+          helm upgrade --install argocd argo/argo-cd \
             --namespace ${{ inputs.argocd_namespace }} \
+            --create-namespace \
             --set server.service.type=LoadBalancer \
-            --set controller.args.appResyncPeriod=180 \
-            --create-namespace --timeout 300s
+            --wait
 
       - name: Wait for ArgoCD to be ready
         run: |

@@ -1,3 +1,9 @@
+
+mode: deployment
+
+image:
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector
+
 config: 
   receivers:
     otlp:
@@ -11,7 +17,7 @@ config:
       check_interval: 1s
       limit_mib: 512
       spike_limit_mib: 128
-
+      
   exporters:
     loki:
       # push logs to Loki
@@ -55,3 +61,4 @@ config:
         address: "0.0.0.0:8888"
       logs:
         level: "info"
+
