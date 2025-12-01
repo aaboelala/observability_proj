@@ -1,0 +1,17 @@
+image:
+  repository: grafana/loki
+  tag: "2.9.1"
+
+loki:
+  commonConfig:
+    replication_factor: 1
+  auth_enabled: false
+  storage:
+    type: filesystem
+
+singleBinary:
+  enabled: true
+  replicas: 1
+
+persistence:
+  enabled: false
