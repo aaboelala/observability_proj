@@ -96,8 +96,7 @@ jobs:
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/tempo-values.yaml \
                --create-namespace \
-               --timeout 600s \
-               --wait
+               
           fi
 
 
