@@ -136,6 +136,22 @@ jobs:
        with:
          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
          aws-region: us-east-1
+
+
+     - name: install helm
+       uses: azure/setup-helm@v3
+       with:
+         version: 'latest'
+
+
+
+     - name: delete the helm resouces
+       run: |
+         helm uninstall argocd --namespace ${{ARGOCD_NAMESPACE}} || echo "ArgoCD not installed, skipping uninstall."
+         helm uninstall otel-collector --namespace ${{ OBSERVABILITY_NAMESPACE }} || echo "OTel Collector not installed, skipping uninstall."
+         helm uninstall prometheus --namespace ${{ OBSERVABILITY_NAMESPACE }} || echo "Prometheus not installed, skipping uninstall."
+         helm uninstall loki --namespace ${{ OBSERVABILITY_NAMESPACE }} || echo "Loki not installed, skipping uninstall."
+         helm uninstall tempo --namespace ${{ OBSERVABILITY_NAMESPACE }} || echo "Tempo not installed, skipping uninstall."
  
      - name: Terraform Init (with backend)
        run: terraform init -reconfigure
