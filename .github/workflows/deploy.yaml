@@ -145,10 +145,11 @@ jobs:
         run: |
           # add secret of gh repo to argocd namespace to be able to pull image
            kubectl create secret docker-registry ghcr-secret \
-            --server=ghcr.io \
-            --username=${{ github.repository_owner }} \
-            --password=${{ secrets.GHCR_SEC }} \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.repository_owner }} \
+            --docker-password=${{ secrets.GHCR_SEC }} \
             -n ${{ inputs.app_namespace }} \
+            --create-namespace \
             || kubectl get secret -n ${{ inputs.app_namespace }}
 
            
