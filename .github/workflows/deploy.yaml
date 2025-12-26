@@ -143,13 +143,14 @@ jobs:
            
       - name: Update ArgoCD Application with latest image
         run: |
+          # create app namespace if not exists
+          kubectl create namespace ${{ inputs.app_namespace }} || kubectl get namespace ${{ inputs.app_namespace }}
           # add secret of gh repo to argocd namespace to be able to pull image
            kubectl create secret docker-registry ghcr-secret \
             --docker-server=ghcr.io \
             --docker-username=${{ github.repository_owner }} \
             --docker-password=${{ secrets.GHCR_SEC }} \
             -n ${{ inputs.app_namespace }} \
-            --create-namespace \
             || kubectl get secret -n ${{ inputs.app_namespace }}
 
            

@@ -23,18 +23,9 @@ on:
       argocd_namespace:
         description: 'The ArgoCD namespace'
         value: ${{ jobs.terraform.outputs.argocd_namespace }}
-      monitoring_namespace:
-        description: 'The monitoring namespace'
-        value: ${{ jobs.terraform.outputs.monitoring_namespace }}
-      traces_namespace:
-        description: 'The traces namespace'
-        value: ${{ jobs.terraform.outputs.traces_namespace }}
-      logging_namespace:
-        description: 'The logging namespace'
-        value: ${{ jobs.terraform.outputs.logging_namespace }}
-      otlc_namespace:
-        description: 'The OpenTelemetry Collector namespace'
-        value: ${{ jobs.terraform.outputs.otlc_namespace }}
+      observability_namespace:
+        description: 'The observability namespace'
+        value: ${{ jobs.terraform.outputs.observability_namespace }}
 
 permissions:
   contents: read
@@ -57,10 +48,7 @@ jobs:
       cluster_name: ${{ steps.terraform_output.outputs.cluster_name }}
       app_namespace: ${{ steps.terraform_output.outputs.app_namespace }}
       argocd_namespace: ${{ steps.terraform_output.outputs.argo_cd_namespace }}
-      monitoring_namespace: ${{ steps.terraform_output.outputs.monitoring_namespace }}
-      traces_namespace: ${{ steps.terraform_output.outputs.traces_namespace }}
-      logging_namespace: ${{ steps.terraform_output.outputs.logging_namespace }}
-      otlc_namespace: ${{ steps.terraform_output.outputs.namespace_otlc }}
+      observability_namespace: ${{ steps.terraform_output.outputs.observability_namespace }}
 
     steps:
       
@@ -109,10 +97,7 @@ jobs:
           echo "CLUSTER_NAME=$(terraform output -raw cluster_name)" >> $GITHUB_ENV
           echo "APP_NAMESPACE=$(terraform output -raw app_namespace)" >> $GITHUB_ENV
           echo "ARGOCD_NAMESPACE=$(terraform output -raw argo_cd_namespace)" >> $GITHUB_ENV
-          echo "MONITORING_NAMESPACE=$(terraform output -raw monitoring_namespace)" >> $GITHUB_ENV
-          echo "TRACES_NAMESPACE=$(terraform output -raw traces_namespace)" >> $GITHUB_ENV
-          echo "LOGGING_NAMESPACE=$(terraform output -raw logging_namespace)" >> $GITHUB_ENV
-          echo "NAMESPACE_OTLC=$(terraform output -raw namespace_otlc)" >> $GITHUB_ENV
+          echo "OBSERVABILITY_NAMESPACE=$(terraform output -raw observability_namespace)" >> $GITHUB_ENV
         working-directory: ./terraform
 
       - name: Export Terraform outputs to job outputs
@@ -121,10 +106,7 @@ jobs:
           echo "cluster_name=$(terraform output -raw cluster_name)" >> $GITHUB_OUTPUT
           echo "app_namespace=$(terraform output -raw app_namespace)" >> $GITHUB_OUTPUT
           echo "argo_cd_namespace=$(terraform output -raw argo_cd_namespace)" >> $GITHUB_OUTPUT
-          echo "monitoring_namespace=$(terraform output -raw monitoring_namespace)" >> $GITHUB_OUTPUT
-          echo "traces_namespace=$(terraform output -raw traces_namespace)" >> $GITHUB_OUTPUT
-          echo "logging_namespace=$(terraform output -raw logging_namespace)" >> $GITHUB_OUTPUT
-          echo "namespace_otlc=$(terraform output -raw namespace_otlc)" >> $GITHUB_OUTPUT      
+          echo "observability_namespace=$(terraform output -raw observability_namespace)" >> $GITHUB_OUTPUT
         working-directory: ./terraform
 
       - name: Set GitHub repository variables
@@ -132,10 +114,7 @@ jobs:
           gh variable set CLUSTER_NAME --body "$CLUSTER_NAME" --repo $GITHUB_REPOSITORY
           gh variable set APP_NAMESPACE --body "$APP_NAMESPACE" --repo $GITHUB_REPOSITORY
           gh variable set ARGOCD_NAMESPACE --body "$ARGOCD_NAMESPACE" --repo $GITHUB_REPOSITORY
-          gh variable set MONITORING_NAMESPACE --body "$MONITORING_NAMESPACE" --repo $GITHUB_REPOSITORY
-          gh variable set TRACES_NAMESPACE --body "$TRACES_NAMESPACE" --repo $GITHUB_REPOSITORY
-          gh variable set LOGGING_NAMESPACE --body "$LOGGING_NAMESPACE" --repo $GITHUB_REPOSITORY
-          gh variable set NAMESPACE_OTLC --body "$NAMESPACE_OTLC" --repo $GITHUB_REPOSITORY
+          gh variable set OBSERVABILITY_NAMESPACE --body "$OBSERVABILITY_NAMESPACE" --repo $GITHUB_REPOSITORY
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_GITHUB }}    
 
