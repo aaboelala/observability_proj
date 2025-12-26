@@ -83,9 +83,7 @@ jobs:
              helm upgrade --install loki grafana/loki \
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/loki-values.yaml \
-               --create-namespace \
-               --timeout 600s \
-               --wait
+               --create-namespace 
           fi
 
 
