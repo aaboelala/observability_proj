@@ -1,45 +1,60 @@
 mode: deployment
-receivers:
-  otlp:
-    protocols:
-      grpc: {}
-      http: {}
 
-processors:
-  memory_limiter:
-    check_interval: 1s
-    limit_mib: 512
-    spike_limit_mib: 128
-  batch:
-    timeout: 10s
+image:
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector
 
-exporters:
-  otlp/tempo:
-    endpoint: "tempo.observability.svc.cluster.local:4317"
-    tls:
-      insecure: true
+config: 
 
-  loki/logs:
-    endpoint: "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+  receivers:
+    otlp:
+      protocols:
+        grpc: {}
+        http: {}
 
-  prometheus/app_metrics:
-    endpoint: "0.0.0.0:9464"  # Collector metrics for app only
-    namespace: "app"
+  processors:
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 512
+      spike_limit_mib: 128
 
+    batch:
+      timeout: 10s
 
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [otlp/tempo]
+  exporters:
+    loki:
+      endpoint: "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+      labels:
+        job: "otel-collector"
 
-    logs:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [loki/logs]
+    otlp/tempo:
+      endpoint: "tempo.observability.svc.cluster.local:4317"
+      tls:
+        insecure: true
 
-    metrics:
-      receivers: [otlp]
-      processors: [memory_limiter, batch]
-      exporters: [prometheus/app_metrics]
+    prometheus:
+      endpoint: "0.0.0.0:8888"
+      const_labels:
+        service: "otel-collector"
+
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [otlp/tempo]
+
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [loki]
+
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [prometheus]
+
+    telemetry:
+      metrics:
+        address: "0.0.0.0:8888"
+      logs:
+        level: "info"
