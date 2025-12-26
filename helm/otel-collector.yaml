@@ -1,64 +1,44 @@
+receivers:
+  otlp:
+    protocols:
+      grpc: {}
+      http: {}
 
-mode: deployment
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+  batch:
+    timeout: 10s
 
-image:
-  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector
+exporters:
+  otlp/tempo:
+    endpoint: "tempo.observability.svc.cluster.local:4317"
+    tls:
+      insecure: true
 
-config: 
-  receivers:
-    otlp:
-      protocols:
-        grpc: {}
-        http: {}
-  processors:
-    batch:
-      timeout: 10s
-    memory_limiter:
-      check_interval: 1s
-      limit_mib: 512
-      spike_limit_mib: 128
-      
-  exporters:
-    loki:
-      # push logs to Loki
-      endpoint: "http://loki:3100/loki/api/v1/push"
-      tenant_id: ""
-      labels:
-        job: "otel-collector"
-      # optional: adjust timeout, tenant header, etc. if needed
+  loki/logs:
+    endpoint: "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
 
-    jaeger:
-      # send traces to Jaeger collector (HTTP thrift endpoint)
-      endpoint: "http://jaeger-collector:14268/api/traces"
-      tls:
-        insecure: true
+  prometheus/app_metrics:
+    endpoint: "0.0.0.0:9464"  # Collector metrics for app only
+    namespace: "app"
 
-    prometheus:
-      # expose metrics so Prometheus can pull/scrape them
-      endpoint: "0.0.0.0:8888"
-      namespace: "otelcol"
-      const_labels:
-        service: "otel-collector"
 
-  service:
-    pipelines:
-      traces:
-        receivers: [otlp]
-        processors: [batch]
-        exporters: [jaeger]
-      logs:
-        receivers: [otlp]
-        processors: [batch]
-        exporters: [loki]
-      metrics:
-        receivers: [otlp]
-        processors: [batch]
-        exporters: [prometheus]
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
 
-    telemetry:
-      # collector internal telemetry (also exposed for scraping)
-      metrics:
-        address: "0.0.0.0:8888"
-      logs:
-        level: "info"
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [loki/logs]
 
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus/app_metrics]

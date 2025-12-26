@@ -1,38 +1,35 @@
-loki:
-  auth_enabled: false
-  
-deploymentMode: scalable
-singleBinary:
-  replicas: 0
-simpleScalable:
-  replicas: 2
+# Deployment mode: SingleBinary (simple), SimpleScalable (medium), Distributed (large)
+deploymentMode: SingleBinary
 
+# Number of replicas
+singleBinary:
+  replicas: 1
+
+# Component replicas
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+
+# Caching
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# Helm test
 test:
   enabled: false
-  
 
-  config: |
-    server:
-      http_listen_port: 3100
-
-    limits_config:
-      allow_structured_metadata: true
-
-    schema_config:
-      configs:
-        - from: 2020-10-24
-          store: boltdb-shipper
-          object_store: filesystem
-          schema: v11
-          index:
-            prefix: index_
-            period: 24h
-
-    storage_config:
-      boltdb_shipper:
-        active_index_directory: /var/loki/index
-        cache_location: /var/loki/cache
-        shared_store: filesystem
-
-      filesystem:
-        directory: /var/loki/chunks
+# All loki settings combined under one key
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    type: filesystem
+    filesystem:
+      directory: /var/loki/chunks
+  useTestSchema: true

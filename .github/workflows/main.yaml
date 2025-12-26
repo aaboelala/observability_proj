@@ -38,8 +38,5 @@ jobs:
     uses: ./.github/workflows/observability.yaml
     with:
       cluster_name: ${{ needs.terraform.outputs.cluster_name }}
-      monitoring_namespace: ${{ needs.terraform.outputs.monitoring_namespace }}
-      traces_namespace: ${{ needs.terraform.outputs.traces_namespace }}
-      logging_namespace: ${{ needs.terraform.outputs.logging_namespace }}
-      otlc_namespace: ${{ needs.terraform.outputs.otlc_namespace }}
+      observability_namespace: ${{ needs.terraform.outputs.observability_namespace }}
     secrets: inherit

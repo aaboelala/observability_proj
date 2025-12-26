@@ -1,0 +1,18 @@
+tempo:
+  # Specific commit for reproducibility
+  tag: "1.7.0"
+    
+  # Metrics generator - The key feature for traces → metrics integration
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090/api/v1/write
+      
+  # Enable service graphs and span metrics
+  overrides:
+    defaults:
+      metrics_generator:
+        processors: [service-graphs, span-metrics, local-blocks]
+
+# Enable persistence for realistic setup
+persistence:
+  enabled: true

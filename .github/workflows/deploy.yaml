@@ -143,7 +143,14 @@ jobs:
            
       - name: Update ArgoCD Application with latest image
         run: |
-          
+          # add secret of gh repo to argocd namespace to be able to pull image
+           kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.repository_owner }} \
+            --docker-password=${{ secrets.GHCR_SEC }} \
+            -n ${{ inputs.app_namespace }} \
+            || echo "Secret already exists"
+            
           # Apply the ArgoCD application
           kubectl apply -f argocd/application/my-app.yaml -n ${{ inputs.argocd_namespace }}
 

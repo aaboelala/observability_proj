@@ -15,20 +15,8 @@ on:
         description: 'The name of the EKS cluster'
         required: true
         type: string
-      monitoring_namespace:
-        description: 'The monitoring namespace'
-        required: true
-        type: string
-      traces_namespace:
-        description: 'The traces namespace'
-        required: true
-        type: string
-      logging_namespace:
-        description: 'The logging namespace'
-        required: true
-        type: string  
-      otlc_namespace:
-        description: 'The OpenTelemetry Collector namespace'
+      observability_namespace:
+        description: 'The observability namespace'
         required: true
         type: string
 
@@ -36,9 +24,6 @@ jobs:
   observability-setup:
     name: Observability Setup
     runs-on: ubuntu-latest
-    env:
-      ELASTICSEARCH_USERNAME: ""
-      ELASTICSEARCH_PASSWORD: ""
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -62,16 +47,17 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: 'latest' 
+          
 
       - name: Install openTelemetry using Helm
         run: |
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo update
-          if helm status otel-collector -n ${{ inputs.otlc_namespace }} > /dev/null 2>&1; then
+          if helm status otel-collector -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
              echo "Release otel-collector already exists, skipping install."
           else
              helm install otel-collector open-telemetry/opentelemetry-collector \
-               --namespace ${{ inputs.otlc_namespace }} \
+               --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/otel-collector.yaml \
                --create-namespace
           fi
@@ -81,21 +67,21 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-          if helm status prometheus -n ${{ inputs.monitoring_namespace }} > /dev/null 2>&1; then
+          if helm status prometheus -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
              echo "Release prometheus already exists, skipping install."
           else
-             helm install prometheus prometheus-community/prometheus --namespace ${{ inputs.monitoring_namespace }} --create-namespace
+             helm install prometheus prometheus-community/kube-prometheus-stack --namespace ${{ inputs.observability_namespace }} --create-namespace
           fi
           
       - name: Install loki using helm 
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
-          if helm status loki -n ${{ inputs.logging_namespace }} > /dev/null 2>&1; then
+          if helm status loki -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
              echo "Release loki already exists, skipping install."
           else
              helm upgrade --install loki grafana/loki \
-               --namespace ${{ inputs.logging_namespace }} \
+               --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/loki-values.yaml \
                --create-namespace \
                --timeout 600s \
@@ -103,55 +89,18 @@ jobs:
           fi
 
 
-      - name: install elastic stack using helm
+      - name: Install tempo using helm 
         run: |
-          if helm status elasticsearch -n ${{ inputs.traces_namespace }} > /dev/null 2>&1; then
-             echo "Release elasticsearch already exists, skipping install."
+          if helm status tempo -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
+             echo "Release tempo already exists, skipping install."
           else
-
-             helm repo add elastic https://helm.elastic.co
-             helm repo update
-             helm install elasticsearch \
-              --set replicas=1 \
-              --set volumeClaimTemplate.storageClassName=gp2 \
-              --set persistence.labels.enabled=true elastic/elasticsearch -n ${{ inputs.traces_namespace }} --create-namespace
+             helm upgrade --install tempo grafana/tempo \
+               --namespace ${{ inputs.observability_namespace }} \
+               -f ./helm/tempo-values.yaml \
+               --create-namespace \
+               --timeout 600s \
+               --wait
           fi
 
-           kubectl rollout status statefulset/elasticsearch-master -n ${{ inputs.traces_namespace }} --timeout=600s 
-
-
-           kubectl get secret elasticsearch-master-certs -n ${{ inputs.traces_namespace }} -o jsonpath="{.data['ca\.crt']}" | base64 --decode > ca-cert.pem
-           kubectl create configmap elastic-ca-cert --from-file=ca-cert.pem -n ${{ inputs.traces_namespace }}
- 
-           echo "ELASTICSEARCH_USERNAME=$(kubectl get secrets --namespace=${{ inputs.traces_namespace }} elasticsearch-master-credentials -ojsonpath='{.data.username}' | base64 -d)" >> $GITHUB_ENV
-           echo "ELASTICSEARCH_PASSWORD=$(kubectl get secrets --namespace=${{ inputs.traces_namespace }} elasticsearch-master-credentials -ojsonpath='{.data.password}' | base64 -d)" >> $GITHUB_ENV
-
-
-
-
-      - name: install jaeger using helm
-        run: |
-          if helm status jaeger -n ${{ inputs.traces_namespace }} > /dev/null 2>&1; then
-             echo "Release jaeger already exists, skipping install."
-          else
-              helm repo add jaeger https://jaegertracing.github.io/helm-charts
-              helm repo update
-              helm install jaeger jaeger/jaeger --namespace ${{ inputs.traces_namespace }} --create-namespace -f ./helm/jaeger-values.yaml \
-                --set storage.elasticsearch.elasticsearch.host=elasticsearch \
-                --set storage.elasticsearch.elasticsearch.user=${{ env.ELASTICSEARCH_USERNAME }} \
-                --set storage.elasticsearch.elasticsearch.password=${{ env.ELASTICSEARCH_PASSWORD }} \
-                --set storage.elasticsearch.elasticsearch.tls.ca="/tls/ca-cert.pem" \
-
-                --set query.extraConfigmapMounts[0].name=elastic-ca-cert \
-                --set query.extraConfigmapMounts[0].configMap=elastic-ca-cert \
-                --set query.extraConfigmapMounts[0].mountPath=/tls \
-                --set query.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" \  
-
-                --set collector.extraConfigmapMounts[0].name=elastic-ca-cert \
-                --set collector.extraConfigmapMounts[0].configMap=elastic-ca-cert \
-                --set collector.extraConfigmapMounts[0].mountPath=/tls \
-                --set collector.cmdlineParams.es.tls.ca="/tls/ca-cert.pem" 
-
-          fi
 
 

@@ -79,38 +79,9 @@ variable "app_namespace" {
   
 }
 
-variable "logging_namespace" {
-    description = "The namespace for Logging"
+variable "observability_namespace" {
+    description = "The namespace for Observability"
     type        = string
-    default     = "logging-ns"
+    default     = "observability-ns"
   
-}
-variable "tracing_namespace" {
-    description = "The namespace for Tracing"
-    type        = string
-    default     = "tracing"
-
-}
-variable "prometheus_namespace" {
-    description = "The namespace for Prometheus"
-    type        = string
-    default     = "prometheus-ns"
-
-}
-
-variable "open_telemetry_collector_namespace" {
-    description = "The namespace for OpenTelemetry Collector"
-    type        = string
-    default     = "otel-namespace"
-}
-
-variable "monitoring_namespace" {
-  description = "The namespace created for Monitoring"
-  type        = string
-  default     = "monitoring-ns"
-}
-variable "traces_namespace" {
-  description = "The namespace created for Traces"
-  type        = string
-  default     = "traces-ns"
 }
