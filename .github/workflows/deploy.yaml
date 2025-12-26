@@ -141,7 +141,7 @@ jobs:
           git push 
 
            
-      - name: Update ArgoCD Application with latest image
+      - name: Create App Namespace and Image Pull Secret
         run: |
           # create app namespace if not exists
           kubectl create namespace ${{ inputs.app_namespace }} || kubectl get namespace ${{ inputs.app_namespace }}
@@ -152,9 +152,11 @@ jobs:
             --docker-password=${{ secrets.GHCR_SEC }} \
             -n ${{ inputs.app_namespace }} \
             || kubectl get secret -n ${{ inputs.app_namespace }}
+            
 
            
-            
+      - name: Update ArgoCD Application with latest image
+        run: |      
           # Apply the ArgoCD application
           kubectl apply -f argocd/application/my-app.yaml -n ${{ inputs.argocd_namespace }}
 

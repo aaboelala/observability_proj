@@ -1,4 +1,4 @@
-mode: otel-collector
+mode: deployment
 receivers:
   otlp:
     protocols:
