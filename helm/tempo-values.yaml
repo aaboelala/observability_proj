@@ -13,6 +13,12 @@ tempo:
       metrics_generator:
         processors: [service-graphs, span-metrics, local-blocks]
 
-# Enable persistence for realistic setup
-persistence:
-  enabled: true
+
+  persistence:
+    enabled: false
+  extraVolumes:
+    - name: tempo-data
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: tempo-data
+      mountPath: /var/tempo
