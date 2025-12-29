@@ -19,7 +19,7 @@ spec:
         - name: ghcr-secret
       containers:
       - name: my-app
-        image: ghcr.io/your-username/your-repo/my-app:latest
+        image: ghcr.io/aaboelala/observability_proj:2ef60a26d53e1101ef6e6c13893b2c27f18a1e49
         ports:
         - containerPort: 5000
 ---
