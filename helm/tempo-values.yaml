@@ -14,11 +14,7 @@ tempo:
         processors: [service-graphs, span-metrics, local-blocks]
 
 
+  # Enable persistence for realistic setup
   persistence:
-    enabled: false
-  extraVolumes:
-    - name: tempo-data
-      emptyDir: {}
-  extraVolumeMounts:
-    - name: tempo-data
-      mountPath: /var/tempo
+    enabled: true
+    storageClassName: "gp2"

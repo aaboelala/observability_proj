@@ -28,14 +28,8 @@ loki:
   auth_enabled: false
   commonConfig:
     replication_factor: 1
-  
   storage:
     type: filesystem
     filesystem:
       directory: /var/loki/chunks
-  extraVolumes:
-    - name: loki-chunks
-      emptyDir: {}
-  extraVolumeMounts:
-    - name: loki-chunks
-      mountPath: /var/loki/chunks
+  useTestSchema: true
