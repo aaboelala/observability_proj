@@ -1,63 +1,51 @@
+# Deployment mode: SingleBinary (simple), SimpleScalable (medium), Distributed (large)
 deploymentMode: SingleBinary
 
-loki:
-  auth_enabled: false
-
-  commonConfig:
-    replication_factor: 1
-
-  storage:
-    type: filesystem
-
-  schemaConfig:
-    configs:
-      - from: 2023-01-01
-        store: tsdb
-        object_store: filesystem
-        schema: v13
-        index:
-          prefix: loki_index_
-          period: 24h
-
+# Number of replicas
 singleBinary:
   replicas: 1
 
+# Component replicas
+write:
+  replicas: 0
+read:
+  replicas: 0
+backend:
+  replicas: 0
+
+# Caching
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
+
+# Helm test
+test:
+  enabled: false
+
+# All loki settings combined under one key
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  
+  storage:
+    type: filesystem
+    filesystem:
+      directory: /var/loki/chunks
   persistence:
-    enabled: true
-    size: 5Gi
-    storageClass: gp2
-
-  resources:
-    requests:
-      cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 250m
-      memory: 512Mi
-
-# اقفل Simple Scalable بالكامل
-simpleScalable:
-  replicas:
-    write: 0
-    read: 0
-    backend: 0
-
-# اقفل باقي المكونات
-ingester:
-  replicas: 0
-querier:
-  replicas: 0
-distributor:
-  replicas: 0
-queryFrontend:
-  replicas: 0
-queryScheduler:
-  replicas: 0
-compactor:
-  replicas: 0
-indexGateway:
-  replicas: 0
-
-
-serviceAccount:
-  create: true
+    enabled: true            # مهم جدا
+    size: 5Gi                # الحجم اللي تحبه
+    storageClass: gp2        # storageClass موجود عندك في EKS
+    accessModes:
+      - ReadWriteOnce      # مناسب لـ EBS
+  schemaConfig:
+    configs:
+      - from: 2020-10-24
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index__
+          period: 24h
+      
