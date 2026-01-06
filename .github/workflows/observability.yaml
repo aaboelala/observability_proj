@@ -77,27 +77,23 @@ jobs:
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
-          if helm status loki -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
-             echo "Release loki already exists, skipping install."
-          else
              helm upgrade --install loki grafana/loki \
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/loki-values.yaml \
                --create-namespace 
-          fi
+         
 
 
       - name: Install tempo using helm 
         run: |
-          if helm status tempo -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
-             echo "Release tempo already exists, skipping install."
-          else
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
              helm upgrade --install tempo grafana/tempo \
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/tempo-values.yaml \
                --create-namespace \
                
-          fi
+
 
 
 
