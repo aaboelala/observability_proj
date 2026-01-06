@@ -33,12 +33,14 @@ loki:
     type: filesystem
     filesystem:
       directory: /var/loki/chunks
+      
   persistence:
     enabled: true            # مهم جدا
-    size: 5Gi                # الحجم اللي تحبه
-    storageClass: gp2        # storageClass موجود عندك في EKS
+    size: 10Gi                # الحجم اللي تحبه
+    storageClass: gp3        # storageClass موجود عندك في EKS
     accessModes:
       - ReadWriteOnce      # مناسب لـ EBS
+
   schemaConfig:
     configs:
       - from: 2020-10-24

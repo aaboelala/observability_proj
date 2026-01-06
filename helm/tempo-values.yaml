@@ -1,11 +1,7 @@
 tempo:
-  retention: 24h
-  storage:
-    trace:
-      backend: local
-      local:
-        path: /var/tempo/traces
-
+  # Specific commit for reproducibility
+  tag: "1.7.0"
+    
   # Metrics generator - The key feature for traces → metrics integration
   metricsGenerator:
     enabled: true
@@ -17,19 +13,11 @@ tempo:
       metrics_generator:
         processors: [service-graphs, span-metrics, local-blocks]
 
-persistence:
-  enabled: true
-  size: 10Gi
-  storageClassName: gp3
 
-resources:
-  requests:
-    cpu: 200m
-    memory: 512Mi
-  limits:
-    cpu: 500m
-    memory: 1Gi
-
-serviceAccount:
-  create: true
-
+  persistence:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: gp3
+  
