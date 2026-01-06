@@ -1,3 +1,5 @@
+deploymentMode: SingleBinary
+
 loki:
   auth_enabled: false
 
@@ -22,8 +24,8 @@ singleBinary:
 
   persistence:
     enabled: true
-    size: 10Gi
-    storageClass: gp3
+    size: 5Gi
+    storageClass: gp2
 
   resources:
     requests:
@@ -33,8 +35,29 @@ singleBinary:
       cpu: 250m
       memory: 512Mi
 
+# اقفل Simple Scalable بالكامل
+simpleScalable:
+  replicas:
+    write: 0
+    read: 0
+    backend: 0
+
+# اقفل باقي المكونات
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+distributor:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+
+
 serviceAccount:
   create: true
-
-imagePullSecrets:
-  - name: ghcr-secret
