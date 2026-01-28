@@ -1,6 +1,6 @@
 loki:
   commonConfig:
-    replication_factor: 1
+    replication_factor: 3
   schemaConfig:
     configs:
       - from: "2024-04-01"
@@ -10,31 +10,46 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
-  
+  storage_config:
+    aws:
+      region: us-east-1
+      bucketnames: loki-bucket-55
+      s3forcepathstyle: false
+  pattern_ingester:
+    enabled: true
+  limits_config:
+    allow_structured_metadata: true
+    volume_enabled: true
+    retention_period: 672h # 28 days retention
+
   storage:
     type: s3
+    bucketNames:
+      chunks: loki-bucket-55
+      ruler: loki-bucket-55
+      admin: loki-bucket-55
     s3:
       region: us-east-1
-    bucketNames:
-      chunks: loki-bucket
-      ruler: loki-bucket
-      admin: loki-bucket
+      # Explicitly empty endpoint/secret/accessKey to ensure it uses IRSA/default AWS chain
+      endpoint: ""
+      secretAccessKey: ""
+      accessKeyId: ""
 
   serviceAccount:
     create: true
     annotations:
       eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/my-todo-list-eks-cluster-loki-irsa
 
+# Disable minio storage
+minio:
+  enabled: false
+
 deploymentMode: SingleBinary
 
 singleBinary:
-  replicas: 1
+  replicas: 3
   persistence:
     enabled: false
-
-# Disable minio as we are using existing S3 bucket
-minio:
-  enabled: false
 
 # Zero out replica counts of other deployment modes
 backend:

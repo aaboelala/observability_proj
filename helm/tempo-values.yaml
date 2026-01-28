@@ -1,12 +1,12 @@
 tempo:
   # Specific commit for reproducibility
   tag: "1.7.0"
-    
+
   # Metrics generator - The key feature for traces → metrics integration
   metricsGenerator:
     enabled: true
     remoteWriteUrl: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090/api/v1/write
-      
+
   # Enable service graphs and span metrics
   overrides:
     defaults:
@@ -17,8 +17,12 @@ tempo:
     trace:
       backend: s3
       s3:
-        bucket: tempo-bucket
+        bucket: tempo-bucket-55
         region: us-east-1
+        # Empty values for IRSA usage (default chain)
+        endpoint: ""
+        access_key: ""
+        secret_key: ""
 
   serviceAccount:
     create: true

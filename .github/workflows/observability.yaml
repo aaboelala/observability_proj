@@ -2,9 +2,9 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Action to perform: apply or destroy'
+        description: "Action to perform: apply or destroy"
         required: true
-        default: 'apply'
+        default: "apply"
         type: choice
         options:
           - apply
@@ -12,11 +12,11 @@ on:
   workflow_call:
     inputs:
       cluster_name:
-        description: 'The name of the EKS cluster'
+        description: "The name of the EKS cluster"
         required: true
         type: string
       observability_namespace:
-        description: 'The observability namespace'
+        description: "The observability namespace"
         required: true
         type: string
 
@@ -37,7 +37,7 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
-          version: 'latest'
+          version: "latest"
 
       - name: Configure Kubeconfig
         run: |
@@ -46,7 +46,7 @@ jobs:
       - name: set up helm
         uses: azure/setup-helm@v3
         with:
-          version: 'latest' 
+          version: "latest"
 
       - name: Install Grafana Alloy using Helm
         run: |
@@ -74,8 +74,13 @@ jobs:
                --create-namespace \
                --timeout 15m
           fi
-          
-      - name: Install loki using helm 
+
+      - name: Delete Loki StatefulSet (Workaround for Immutable Fields)
+        run: |
+          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region us-east-1
+          kubectl delete statefulset loki --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
+
+      - name: Install loki using helm
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
@@ -85,7 +90,7 @@ jobs:
                --create-namespace \
                --timeout 15m
 
-      - name: Install tempo using helm 
+      - name: Install tempo using helm
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
