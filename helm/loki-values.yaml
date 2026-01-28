@@ -14,8 +14,11 @@ loki:
   storage:
     type: s3
     s3:
-      bucketnames: loki-bucket
       region: us-east-1
+    bucketNames:
+      chunks: loki-bucket
+      ruler: loki-bucket
+      admin: loki-bucket
 
   serviceAccount:
     create: true

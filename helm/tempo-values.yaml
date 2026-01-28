@@ -27,6 +27,3 @@ tempo:
 
   persistence:
     enabled: false
-
-# Optional: Ensure it runs as a single binary if not already
-# (Tempo chart defaults to monolithic/single-binary unless structured)
