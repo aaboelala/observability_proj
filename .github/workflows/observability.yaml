@@ -49,16 +49,16 @@ jobs:
           version: 'latest' 
           
 
-      - name: Install openTelemetry using Helm
+      - name: Install Grafana Alloy using Helm
         run: |
-          helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
-          if helm status otel-collector -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
-             echo "Release otel-collector already exists, skipping install."
+          if helm status alloy -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
+             echo "Release alloy already exists, skipping install."
           else
-             helm install otel-collector open-telemetry/opentelemetry-collector \
+             helm install alloy grafana/alloy \
                --namespace ${{ inputs.observability_namespace }} \
-               -f ./helm/otel-collector.yaml \
+               -f ./helm/alloy-values.yaml \
                --create-namespace
           fi
       

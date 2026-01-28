@@ -1,0 +1,117 @@
+controller:
+  type: deployment
+  replicas: 1
+
+alloy:
+  extraPorts:
+    - name: "otlp-grpc"
+      port: 4317
+      targetPort: 4317
+      protocol: "TCP"
+    - name: "otlp-http"
+      port: 4318
+      targetPort: 4318
+      protocol: "TCP"
+  configReloader:
+    enabled: true
+  alloy:
+    config: |
+      logging {
+        level  = "info"
+        format = "logfmt"
+      }
+
+      otelcol.receiver.otlp "default" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+        output {
+          metrics = [otelcol.processor.resourcedetection.default.input]
+          logs    = [otelcol.processor.resourcedetection.default.input]
+          traces  = [otelcol.processor.resourcedetection.default.input]
+        }
+      }
+
+      otelcol.processor.resourcedetection "default" {
+        detectors = ["env", "system"]
+        output {
+          metrics = [otelcol.processor.attributes.default.input]
+          logs    = [otelcol.processor.attributes.default.input]
+          traces  = [otelcol.processor.attributes.default.input]
+        }
+      }
+
+      otelcol.processor.attributes "default" {
+        action {
+          key    = "project"
+          value  = "todo-app"
+          action = "upsert"
+        }
+        action {
+          key    = "collector"
+          value  = "alloy"
+          action = "upsert"
+        }
+        action {
+          key    = "env"
+          value  = "prod"
+          action = "upsert"
+        }
+        output {
+          metrics = [otelcol.processor.batch.default.input]
+          logs    = [otelcol.processor.batch.default.input]
+          traces  = [otelcol.processor.batch.default.input]
+        }
+      }
+
+      otelcol.processor.batch "default" {
+        output {
+          metrics = [otelcol.exporter.prometheus.default.input]
+          logs    = [otelcol.exporter.loki.default.input]
+          traces  = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.process.label_logs.receiver]
+      }
+
+      loki.process "label_logs" {
+        stage.labels {
+          values = {
+            project   = null,
+            env       = null,
+            collector = null,
+            service_name = "service.name",
+          }
+        }
+        forward_to = [loki.write.default.receiver]
+      }
+
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.observability.svc.cluster.local:3100/loki/api/v1/push"
+        }
+      }
+
+      otelcol.exporter.prometheus "default" {
+        forward_to = [prometheus.remote_write.default.receiver]
+      }
+
+      prometheus.remote_write "default" {
+        endpoint {
+          url = "http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090/api/v1/write"
+        }
+      }
+
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo.observability.svc.cluster.local:4317"
+          tls {
+            insecure = true
+          }
+        }
+      }

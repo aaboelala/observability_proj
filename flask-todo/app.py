@@ -49,7 +49,7 @@ resource = Resource.create(
     }
 )
 
-OTEL_ENDPOINT = "otel-collector.observability-ns.svc.cluster.local:4317"
+OTEL_ENDPOINT = "alloy.monitoring.svc.cluster.local:4317"
 
 # =====================
 # Tracing

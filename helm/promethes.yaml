@@ -6,6 +6,10 @@ prometheus:
     enableFeatures:
       - exemplar-storage
       - native-histograms
+    externalLabels:
+      cluster: eks-cluster
+      project: todo-app
+      env: prod
 
 grafana:
   # Enable anonymous access for demo (default: requires login)
@@ -22,31 +26,45 @@ grafana:
   plugins:
     - grafana-exploretraces-app
   
-  # Connect Grafana to Tempo (default: only Prometheus datasource)
-  datasources:
-    datasources.yaml:
-      apiVersion: 1
-      datasources:
-        - name: Tempo
-          type: tempo
-          access: proxy
-          url: http://tempo.observability.svc.cluster.local:3100
-          uid: tempo
-          jsonData:
-            httpMethod: GET
-            serviceMap:
-              datasourceUid: prometheus
-            tracesToMetrics:
-              datasourceUid: prometheus
-
   additionalDataSources:
     - name: Loki
       type: loki
-      url: http://loki-gateway.observability.svc.cluster.local
+      url: http://loki.observability.svc.cluster.local:3100
       access: proxy
-      # Even with auth_enabled: false, Loki requires an org ID header
-      # This is a known quirk - the value can be anything since auth is disabled
       jsonData:
         httpHeaderName1: "X-Scope-OrgID"
+        derivedFields:
+          - datasourceUid: tempo
+            matcherRegex: "(?:trace_id|traceId)=(\\w+)"
+            name: TraceID
+            url: "$${__value.raw}"
+          - datasourceUid: tempo
+            matcherRegex: "(?:span_id|spanId)=(\\w+)"
+            name: SpanID
+            url: "$${__value.raw}"
+      secureJsonData:
+        httpHeaderValue1: "1"
+
+    - name: Tempo
+      type: tempo
+      access: proxy
+      url: http://tempo.observability.svc.cluster.local:3100
+      uid: tempo
+      jsonData:
+        httpMethod: GET
+        serviceMap:
+          datasourceUid: prometheus
+        nodeGraph:
+          enabled: true
+        search:
+          hide: false
+        tracesToMetrics:
+          datasourceUid: prometheus
+          spanAttributes: [service.name, http.method, http.status_code]
+        tracesToLogs:
+          datasourceUid: Loki
+          filterByTraceId: true
+          filterBySpanId: false
+          lokiSearch: true
         
 
