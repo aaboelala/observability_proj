@@ -47,7 +47,6 @@ jobs:
         uses: azure/setup-helm@v3
         with:
           version: 'latest' 
-          
 
       - name: Install Grafana Alloy using Helm
         run: |
@@ -59,10 +58,10 @@ jobs:
              helm install alloy grafana/alloy \
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/alloy-values.yaml \
-               --create-namespace
+               --create-namespace \
+               --timeout 15m
           fi
-      
-      
+
       - name: Install Prometheus using Helm
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -70,7 +69,10 @@ jobs:
           if helm status prometheus -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
              echo "Release prometheus already exists, skipping install."
           else
-             helm install prometheus prometheus-community/kube-prometheus-stack --namespace ${{ inputs.observability_namespace }} --create-namespace
+             helm install prometheus prometheus-community/kube-prometheus-stack \
+               --namespace ${{ inputs.observability_namespace }} \
+               --create-namespace \
+               --timeout 15m
           fi
           
       - name: Install loki using helm 
@@ -80,9 +82,8 @@ jobs:
              helm upgrade --install loki grafana/loki \
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/loki-values.yaml \
-               --create-namespace 
-         
-
+               --create-namespace \
+               --timeout 15m
 
       - name: Install tempo using helm 
         run: |
@@ -92,8 +93,4 @@ jobs:
                --namespace ${{ inputs.observability_namespace }} \
                -f ./helm/tempo-values.yaml \
                --create-namespace \
-               
-
-
-
-
+               --timeout 15m

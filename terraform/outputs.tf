@@ -19,3 +19,11 @@ output "observability_namespace" {
   description = "The namespace created for Observability"
   value       = var.observability_namespace
 }
+
+output "loki_irsa_role_arn" {
+  value = module.loki_irsa.iam_role_arn
+}
+
+output "tempo_irsa_role_arn" {
+  value = module.tempo_irsa.iam_role_arn
+}
