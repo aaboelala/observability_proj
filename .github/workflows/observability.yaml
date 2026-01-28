@@ -75,6 +75,14 @@ jobs:
                --timeout 15m
           fi
 
+      - name: Delete Loki & MinIO Resources (Cleanup)
+        run: |
+          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region us-east-1
+          kubectl delete statefulset loki --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
+          kubectl delete statefulset loki-minio --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
+          kubectl delete pvc -l release=loki --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
+          kubectl delete pvc -l app=minio --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
+
       - name: Install loki using helm
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
@@ -84,14 +92,6 @@ jobs:
                -f ./helm/loki-values.yaml \
                --create-namespace \
                --timeout 15m
-
-      - name: Delete Loki & MinIO Resources (Cleanup)
-        run: |
-          aws eks update-kubeconfig --name ${{ inputs.cluster_name }} --region us-east-1
-          kubectl delete statefulset loki --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
-          kubectl delete statefulset loki-minio --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
-          kubectl delete pvc -l release=loki --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
-          kubectl delete pvc -l app=minio --namespace ${{ inputs.observability_namespace }} --ignore-not-found=true
 
       - name: Install tempo using helm
         run: |
