@@ -36,7 +36,7 @@ loki:
   serviceAccount:
     create: true
     annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/my-todo-list-eks-cluster-loki-irsa
+      eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-loki-irsa
 
 # Disable minio storage
 minio:
