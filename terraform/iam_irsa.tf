@@ -32,8 +32,8 @@ resource "aws_iam_policy" "loki_s3" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "arn:aws:s3:::loki-bucket",
-          "arn:aws:s3:::loki-bucket/*"
+          "arn:aws:s3:::loki-bucket-55",
+          "arn:aws:s3:::loki-bucket-55/*"
         ]
       }
     ]
@@ -74,8 +74,8 @@ resource "aws_iam_policy" "tempo_s3" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "arn:aws:s3:::tempo-bucket",
-          "arn:aws:s3:::tempo-bucket/*"
+          "arn:aws:s3:::tempo-bucket-55",
+          "arn:aws:s3:::tempo-bucket-55/*"
         ]
       }
     ]

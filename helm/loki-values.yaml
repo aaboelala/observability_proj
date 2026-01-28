@@ -52,13 +52,15 @@ singleBinary:
   extraVolumes:
     - name: data
       emptyDir: {}
-    - name: tmp
-      emptyDir: {}
   extraVolumeMounts:
     - name: data
       mountPath: /var/loki
-    - name: tmp
-      mountPath: /tmp
+
+# Disable caching to reduce pod count
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
 
 # Zero out replica counts of other deployment modes
 backend:

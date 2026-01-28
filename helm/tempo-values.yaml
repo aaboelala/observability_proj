@@ -1,6 +1,6 @@
 tempo:
   # Specific commit for reproducibility
-  tag: "1.7.0"
+  tag: "2.3.0"
 
   # Metrics generator - The key feature for traces → metrics integration
   metricsGenerator:
