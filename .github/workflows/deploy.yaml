@@ -52,7 +52,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_SEC}}
 
       - name: situp Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -141,6 +141,8 @@ jobs:
           git push
 
       - name: Create App Namespace and Image Pull Secret
+        env:
+          DOCKER_PASSWORD: ${{ secrets.GHCR_SEC }}
         run: |
           # create app namespace if not exists
           kubectl create namespace ${{ inputs.app_namespace }} || kubectl get namespace ${{ inputs.app_namespace }}
@@ -148,7 +150,7 @@ jobs:
            kubectl create secret docker-registry ghcr-secret \
             --docker-server=ghcr.io \
             --docker-username=${{ github.repository_owner }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --docker-password="$DOCKER_PASSWORD" \
             -n ${{ inputs.app_namespace }} \
             --dry-run=client -o yaml | kubectl apply -f -
 

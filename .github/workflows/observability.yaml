@@ -52,29 +52,23 @@ jobs:
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
-          if helm status alloy -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
-             echo "Release alloy already exists, skipping install."
-          else
-             helm install alloy grafana/alloy \
-               --namespace ${{ inputs.observability_namespace }} \
-               -f ./helm/alloy-values.yaml \
-               --create-namespace \
-               --timeout 15m
-          fi
+          helm repo update
+          helm upgrade --install alloy grafana/alloy \
+            --namespace ${{ inputs.observability_namespace }} \
+            -f ./helm/alloy-values.yaml \
+            --create-namespace \
+            --timeout 15m
 
       - name: Install Prometheus using Helm
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-          if helm status prometheus -n ${{ inputs.observability_namespace }} > /dev/null 2>&1; then
-             echo "Release prometheus already exists, skipping install."
-          else
-             helm install prometheus prometheus-community/kube-prometheus-stack \
-               --namespace ${{ inputs.observability_namespace }} \
-               -f ./helm/promethes.yaml \
-               --create-namespace \
-               --timeout 15m
-          fi
+          helm repo update
+          helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+            --namespace ${{ inputs.observability_namespace }} \
+            -f ./helm/promethes.yaml \
+            --create-namespace \
+            --timeout 15m
 
       - name: Install loki using helm
         run: |
