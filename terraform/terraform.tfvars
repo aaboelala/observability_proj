@@ -1,9 +1,9 @@
 # terraform.tfvars - OPTIMIZED FOR SPEED
 # Infrastructure Configuration for Solar System App
-region           = "us-east-1"
+region = "us-east-1"
 
-cidr_block       = "10.0.0.0/16"
-vpc_azs          = ["us-east-1a", "us-east-1b"] # Reduced from 3 to 2 AZs
+cidr_block = "10.0.0.0/16"
+vpc_azs    = ["us-east-1a", "us-east-1b"] # Reduced from 3 to 2 AZs
 
 
 vpc_private_subnets = ["10.0.1.0/24", "10.0.2.0/24"] # Reduced from 3 to 2
@@ -25,6 +25,6 @@ node_groups = {
       min_size     = 1
     }
 
-    ssh_key_name = "key" 
+    ssh_key_name = "key"
   }
 }

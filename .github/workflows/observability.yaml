@@ -71,6 +71,7 @@ jobs:
           else
              helm install prometheus prometheus-community/kube-prometheus-stack \
                --namespace ${{ inputs.observability_namespace }} \
+               -f ./helm/promethes.yaml \
                --create-namespace \
                --timeout 15m
           fi
@@ -94,3 +95,7 @@ jobs:
                -f ./helm/tempo-values.yaml \
                --create-namespace \
                --timeout 15m
+
+      - name: Apply Grafana Dashboards
+        run: |
+          kubectl apply -f ./helm/dashboards/dashboards.yaml -n ${{ inputs.observability_namespace }}

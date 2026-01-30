@@ -1,0 +1,226 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "datasource",
+                    "uid": "grafana"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": null,
+    "links": [],
+    "liveNow": false,
+    "panels": [
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${prom_datasource}"
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${prom_datasource}"
+                    },
+                    "editorMode": "code",
+                    "expr": "sum(rate(traces_spanmetrics_calls_total{service=\"$service\"}[$__rate_interval])) by (span_name)",
+                    "legendFormat": "{{span_name}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Span Calls Rate (from SpanMetrics)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${prom_datasource}"
+            },
+            "gridPos": {
+                "h": 10,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${prom_datasource}"
+                    },
+                    "editorMode": "code",
+                    "expr": "histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{service=\"$service\"}[$__rate_interval])) by (le, span_name))",
+                    "legendFormat": "p95 {{span_name}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Span Latency (p95)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "tempo",
+                "uid": "${tempo_datasource}"
+            },
+            "gridPos": {
+                "h": 14,
+                "w": 24,
+                "x": 0,
+                "y": 10
+            },
+            "id": 3,
+            "options": {
+                "showSearch": true,
+                "showTimeline": true
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "tempo",
+                        "uid": "${tempo_datasource}"
+                    },
+                    "queryType": "search",
+                    "refId": "A",
+                    "serviceName": "$service",
+                    "limit": 20
+                }
+            ],
+            "title": "Recent Traces",
+            "type": "traces"
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [
+        "flask",
+        "todo-app",
+        "traces",
+        "tempo"
+    ],
+    "templating": {
+        "list": [
+            {
+                "current": {
+                    "selected": false,
+                    "text": "Prometheus",
+                    "value": "prometheus"
+                },
+                "hide": 0,
+                "includeAll": false,
+                "multi": false,
+                "name": "prom_datasource",
+                "options": [],
+                "query": "prometheus",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "type": "datasource"
+            },
+            {
+                "current": {
+                    "selected": false,
+                    "text": "Tempo",
+                    "value": "tempo"
+                },
+                "hide": 0,
+                "includeAll": false,
+                "multi": false,
+                "name": "tempo_datasource",
+                "options": [],
+                "query": "tempo",
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "type": "datasource"
+            },
+            {
+                "current": {
+                    "selected": false,
+                    "text": "flask-todo-app",
+                    "value": "flask-todo-app"
+                },
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${prom_datasource}"
+                },
+                "definition": "label_values(traces_spanmetrics_calls_total, service)",
+                "hide": 0,
+                "includeAll": false,
+                "multi": false,
+                "name": "service",
+                "options": [],
+                "query": {
+                    "query": "label_values(traces_spanmetrics_calls_total, service)",
+                    "refId": "StandardVariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "skipUrlSync": false,
+                "sort": 1,
+                "type": "query"
+            }
+        ]
+    },
+    "time": {
+        "from": "now-1h",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Flask Todo App (Tempo & SpanMetrics)",
+    "uid": "flask-tempo-dashboard",
+    "version": 1,
+    "weekStart": ""
+}

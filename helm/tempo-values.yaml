@@ -17,7 +17,6 @@ tempo:
         bucket: tempo-bucket-55
         region: us-east-1
         # Empty values for IRSA usage (default chain)
-        endpoint: ""
         access_key: ""
         secret_key: ""
 

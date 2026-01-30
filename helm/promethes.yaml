@@ -5,6 +5,7 @@ prometheus:
     # Enable exemplar storage for metrics-traces linking (default: [])
     enableFeatures:
       - exemplar-storage
+      - exemplar-storage
       - native-histograms
     externalLabels:
       cluster: eks-cluster
@@ -12,6 +13,10 @@ prometheus:
       env: prod
 
 grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
   # Enable anonymous access for demo (default: requires login)
   grafana.ini:
     auth.anonymous:
@@ -21,11 +26,11 @@ grafana:
       disable_login_form: true
     feature_toggles:
       enable: traceqlEditor
-  
+
   # Add trace exploration plugin (default: no plugins)
   plugins:
     - grafana-exploretraces-app
-  
+
   additionalDataSources:
     - name: Loki
       type: loki
@@ -66,5 +71,3 @@ grafana:
           filterByTraceId: true
           filterBySpanId: false
           lokiSearch: true
-        
-
