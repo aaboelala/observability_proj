@@ -52,7 +52,6 @@ jobs:
         run: |
           helm repo add grafana https://grafana.github.io/helm-charts
           helm repo update
-          helm repo update
           helm upgrade --install alloy grafana/alloy \
             --namespace ${{ inputs.observability_namespace }} \
             -f ./helm/alloy-values.yaml \
