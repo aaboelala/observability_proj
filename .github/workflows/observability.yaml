@@ -63,12 +63,10 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-          helm repo update
           helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
             --namespace ${{ inputs.observability_namespace }} \
             -f ./helm/promethes.yaml \
-            --create-namespace \
-            --timeout 15m
+            --create-namespace
 
       - name: Install loki using helm
         run: |
