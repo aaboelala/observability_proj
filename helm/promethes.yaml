@@ -4,7 +4,7 @@ prometheus:
     enableRemoteWriteReceiver: true
     # Enable exemplar storage for metrics-traces linking (default: [])
     enableFeatures:
-      - exemplar-storage
+      - remote-write
       - exemplar-storage
       - native-histograms
     externalLabels:
