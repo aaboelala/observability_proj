@@ -279,7 +279,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
     name: flask-loki-dashboard
-    namespace: observability
+    namespace: observability-ns
     labels:
         grafana_dashboard: "1"
 data:
@@ -501,7 +501,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
     name: flask-tempo-dashboard
-    namespace: observability
+    namespace: observability-ns
     labels:
         grafana_dashboard: "1"
 data:
