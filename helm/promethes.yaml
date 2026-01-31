@@ -33,26 +33,17 @@ grafana:
   additionalDataSources:
     - name: Loki
       type: loki
-      url: http://loki.observability.svc.cluster.local:3100
+      url: http://loki.observability-ns.svc.cluster.local:3100
       access: proxy
       jsonData:
         httpHeaderName1: "X-Scope-OrgID"
-        derivedFields:
-          - datasourceUid: tempo
-            matcherRegex: "(?:trace_id|traceId)=(\\w+)"
-            name: TraceID
-            url: "$${__value.raw}"
-          - datasourceUid: tempo
-            matcherRegex: "(?:span_id|spanId)=(\\w+)"
-            name: SpanID
-            url: "$${__value.raw}"
       secureJsonData:
         httpHeaderValue1: "1"
 
     - name: Tempo
       type: tempo
       access: proxy
-      url: http://tempo.observability.svc.cluster.local:3100
+      url: http://tempo.observability-ns.svc.cluster.local:3100
       uid: tempo
       jsonData:
         httpMethod: GET
