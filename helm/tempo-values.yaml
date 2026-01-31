@@ -1,29 +1,71 @@
+# Official Tempo Helm Chart Values
+replicas: 1
+
 tempo:
-  # Matrics generator - The key feature for traces → metrics integration
+  # Enable metrics generator to convert traces to metrics
   metricsGenerator:
     enabled: true
-    remoteWriteUrl: http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090/api/v1/write
-
-  # Enable service graphs and span metrics
+    remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090/api/v1/write"
+    # Processor configuration
+    processor:
+      service_graphs: {}
+      span_metrics:
+        enable_target_info: true
+    # Storage paths
+    storage:
+      path: "/tmp/tempo"
+    traces_storage:
+      path: "/tmp/traces"
+  
+  # Server configuration
+  server:
+    http_listen_port: 3200
+  
+  # Ingester configuration
+  ingester: {}
+  
+  # Querier configuration
+  querier: {}
+  
+  # Receivers configuration
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+  
+  # Retention policy
+  retention: 24h
+  
+  # Standard overrides for all tenants
   overrides:
-    defaults:
-      metrics_generator:
-        processors: [service-graphs, span-metrics, local-blocks]
+    defaults: 
+     metrics_generator:
+       processors:
+          - service-graphs
+          - span-metrics
+  
+  
 
+  # Storage backend (top level)
   storage:
     trace:
       backend: s3
       s3:
         bucket: tempo-bucket-55
         region: us-east-1
-        # Empty values for IRSA usage (default chain)
-        access_key: ""
-        secret_key: ""
+        endpoint: "s3.us-east-1.amazonaws.com"
+        access_key: ""  # Use IRSA
+        secret_key: ""  # Use IRSA
 
-  serviceAccount:
-    create: true
-    annotations:
-      eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-tempo-irsa
+# Service Account with IRSA
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-tempo-irsa
 
-  persistence:
-    enabled: false
+# Persistence disabled (using S3)
+persistence:
+  enabled: false
