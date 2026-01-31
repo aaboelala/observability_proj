@@ -36,7 +36,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/my-app
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -54,7 +54,7 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_SEC}}
 
-      - name: situp Docker Buildx
+      - name: setup Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Build and push Docker image
@@ -63,8 +63,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository}}:latest
-            ghcr.io/${{ github.repository}}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
   deploy-argocd:
     name: Deploy ArgoCD and Application
     runs-on: ubuntu-latest
@@ -131,14 +131,20 @@ jobs:
 
       - name: Update manifest image tag
         run: |
-          sed -i "s|image: ghcr.io/.*|image: ghcr.io/${{ github.repository }}:${{ github.sha }}|g" argocd/manifests/servce-my-app.yaml
+          # update image tag in the manifest
+          sed -i "s|image: ghcr.io/.*|image: ${{ env.IMAGE_NAME }}:${{ github.sha }}|g" argocd/manifests/servce-my-app.yaml
 
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
 
+          # Only commit if there are changes
           git add argocd/manifests/servce-my-app.yaml
-          git commit -m "Update image to ${{ github.sha }}"
-          git push
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update image to ${{ github.sha }}"
+            git push
+          fi
 
       - name: Create App Namespace and Image Pull Secret
         env:
