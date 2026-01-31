@@ -6,8 +6,8 @@ cidr_block = "10.0.0.0/16"
 vpc_azs    = ["us-east-1a", "us-east-1b"] # Reduced from 3 to 2 AZs
 
 
-vpc_private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"] # Reduced from 3 to 2
-vpc_public_subnets  = ["10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"] # Reduced from 3 to 2
+vpc_private_subnets = ["10.0.1.0/24", "10.0.2.0/24"] # Reduced from 3 to 2
+vpc_public_subnets  = ["10.0.4.0/24", "10.0.5.0/24"] # Reduced from 3 to 2
 
 # EKS Cluster Configuration
 cluster_name    = "todo-list-app-cluster"
