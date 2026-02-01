@@ -1,63 +1,68 @@
-# Tempo Single Binary Configuration with S3 Storage
+# Tempo Single Binary with S3 backend + IAM Role
 deploymentMode: SingleBinary
 
 tempo:
-  # Storage configuration - S3 backend
+  retention: 24h
+
+  # Trace Storage - S3 backend
   storage:
     trace:
       backend: s3
       s3:
         bucket: tempo-bucket-55
         region: us-east-1
-        # Explicitly empty to ensure IRSA/default credential chain
-        endpoint: ""
-        access_key: ""
-        secret_key: ""
+        endpoint: "" # empty = default AWS endpoint
+        access_key: "" # empty because we use IRSA
+        secret_key: "" # empty because we use IRSA
         insecure: false
 
-  # Metrics Generator for RED metrics from traces
+  # Metrics Generator
   metricsGenerator:
     enabled: true
     remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.observability-ns.svc.cluster.local:9090/api/v1/write"
+    storage:
+      backend: local
+      local:
+        path: /tmp/tempo-metrics
 
-  # Retention configuration
-  retention: 24h
+  # Disable optional search / local store
+  search:
+    enabled: false
 
-# Service Account with IRSA annotation
+# ServiceAccount with IAM Role for S3 access
 serviceAccount:
   create: true
-  name: "tempo"
+  name: tempo
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-tempo-irsa
 
-# Global service account for all components
 global:
   serviceAccount:
     create: true
-    name: "tempo"
+    name: tempo
     annotations:
       eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-tempo-irsa
 
-# Single Binary deployment
+# Single Binary specifics
 singleBinary:
   replicas: 1
   persistence:
     enabled: false
-  # Writable directories for stateless mode
   extraVolumes:
-    - name: data
+    - name: tmp-metrics
       emptyDir: {}
   extraVolumeMounts:
-    - name: data
-      mountPath: /var/tempo
+    - name: tmp-metrics
+      mountPath: /tmp/tempo-metrics
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
 
-# Disable persistence (using S3)
-persistence:
-  enabled: false
-
-# Zero out other deployment mode replicas
-backend:
-  replicas: 0
+# Disable distributed components
 distributor:
   replicas: 0
 ingester:
@@ -68,3 +73,7 @@ queryFrontend:
   replicas: 0
 compactor:
   replicas: 0
+
+# Global persistence disabled
+persistence:
+  enabled: false

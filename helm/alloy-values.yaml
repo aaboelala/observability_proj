@@ -61,6 +61,35 @@ alloy:
           action = "upsert"
         }
         output {
+          metrics = [otelcol.processor.transform.add_service_name.input]
+          logs    = [otelcol.processor.transform.add_service_name.input]
+          traces  = [otelcol.processor.transform.add_service_name.input]
+        }
+      }
+
+      otelcol.processor.transform "add_service_name" {
+        error_mode = "ignore"
+        metric_statements {
+          context = "datapoint"
+          statements = [
+            "set(attributes[\"service_name\"], resource.attributes[\"service.name\"])",
+          ]
+        }
+        log_statements {
+          context = "log"
+          statements = [
+            "set(attributes[\"service_name\"], resource.attributes[\"service.name\"])",
+             # Ensure explicit label hint for Loki exporter if needed, or just rely on existence
+             "set(attributes[\"loki.attribute.labels\"], \"service_name\")", 
+          ]
+        }
+        trace_statements {
+          context = "span"
+          statements = [
+            "set(attributes[\"service_name\"], resource.attributes[\"service.name\"])",
+          ]
+        }
+        output {
           metrics = [otelcol.processor.batch.default.input]
           logs    = [otelcol.processor.batch.default.input]
           traces  = [otelcol.processor.batch.default.input]

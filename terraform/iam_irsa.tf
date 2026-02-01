@@ -71,7 +71,11 @@ resource "aws_iam_policy" "tempo_s3" {
           "s3:PutObject",
           "s3:GetObject",
           "s3:ListBucket",
-          "s3:DeleteObject"
+          "s3:DeleteObject",
+          "s3:GetBucketLocation",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListMultipartUploadParts",
+          "s3:AbortMultipartUpload"
         ]
         Resource = [
           "arn:aws:s3:::tempo-bucket-55",
