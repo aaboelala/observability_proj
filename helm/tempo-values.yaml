@@ -1,69 +1,70 @@
-# Official Tempo Helm Chart Values
-replicas: 1
+# Tempo Single Binary Configuration with S3 Storage
+deploymentMode: SingleBinary
 
 tempo:
-  # Enable metrics generator to convert traces to metrics
-  metricsGenerator:
-    enabled: true
-    remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.observability.svc.cluster.local:9090/api/v1/write"
-    # Processor configuration
-    processor:
-      service_graphs: {}
-      span_metrics:
-        enable_target_info: true
-    # Storage paths
-    storage:
-      path: "/tmp/tempo"
-    traces_storage:
-      path: "/tmp/traces"
-
-  # Server configuration
-  server:
-    http_listen_port: 3200
-
-  # Ingester configuration
-  ingester: {}
-
-  # Querier configuration
-  querier: {}
-
-  # Receivers configuration
-  receivers:
-    otlp:
-      protocols:
-        grpc:
-          endpoint: "0.0.0.0:4317"
-        http:
-          endpoint: "0.0.0.0:4318"
-
-  # Retention policy
-  retention: 24h
-
-  # Standard overrides for all tenants
-  overrides:
-    defaults:
-      metrics_generator:
-        processors:
-          - service-graphs
-          - span-metrics
-
-  # Storage backend (top level)
+  # Storage configuration - S3 backend
   storage:
     trace:
       backend: s3
       s3:
         bucket: tempo-bucket-55
         region: us-east-1
-        endpoint: "s3.us-east-1.amazonaws.com"
-        access_key: "" # Use IRSA
-        secret_key: "" # Use IRSA
+        # Explicitly empty to ensure IRSA/default credential chain
+        endpoint: ""
+        access_key: ""
+        secret_key: ""
+        insecure: false
 
-# Service Account with IRSA
+  # Metrics Generator for RED metrics from traces
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.observability-ns.svc.cluster.local:9090/api/v1/write"
+
+  # Retention configuration
+  retention: 24h
+
+# Service Account with IRSA annotation
 serviceAccount:
   create: true
+  name: "tempo"
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-tempo-irsa
 
-# Persistence disabled (using S3)
+# Global service account for all components
+global:
+  serviceAccount:
+    create: true
+    name: "tempo"
+    annotations:
+      eks.amazonaws.com/role-arn: arn:aws:iam::864899840633:role/todo-list-app-cluster-tempo-irsa
+
+# Single Binary deployment
+singleBinary:
+  replicas: 1
+  persistence:
+    enabled: false
+  # Writable directories for stateless mode
+  extraVolumes:
+    - name: data
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: data
+      mountPath: /var/tempo
+
+# Disable persistence (using S3)
 persistence:
   enabled: false
+
+# Zero out other deployment mode replicas
+backend:
+  replicas: 0
+distributor:
+  replicas: 0
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+compactor:
+  replicas: 0
