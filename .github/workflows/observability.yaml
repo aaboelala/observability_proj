@@ -89,4 +89,4 @@ jobs:
 
       - name: Apply Grafana Dashboards
         run: |
-          kubectl apply -f ./helm/dashboards/dashboards.yaml -n ${{ inputs.observability_namespace }}
+          kubectl apply -f ./dashboards/dashboards.yaml -n ${{ inputs.observability_namespace }}
