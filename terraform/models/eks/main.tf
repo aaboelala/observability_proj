@@ -102,6 +102,11 @@ resource "aws_eks_node_group" "main" {
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = var.subnet_ids
 
+  # Instance configuration - prevents slow auto-detection
+  instance_types = each.value.instance_types
+  capacity_type  = each.value.capacity_type
+  ami_type       = "AL2_x86_64" # Amazon Linux 2
+
   scaling_config {
     desired_size = each.value.scaling_config.desired_size
     max_size     = each.value.scaling_config.max_size

@@ -23,7 +23,7 @@ resource "aws_subnet" "private" {
 
   tags = {
     Name                                        = "${var.vpc_name}-eks-private-${count.index}"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owened"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
     "kubernetes.io/role/internal-elb"           = 1
   }
   depends_on = [aws_vpc.main]
